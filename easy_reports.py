@@ -361,9 +361,29 @@ class EasyReports:
 
         return True
 
-    def exportPrintLayout(self, layoutParams, scale = 1.1, outputFolder = None, driver = 'png'):
+    def exportPrintLayout(self, layoutParams, isAtlas = True, imgDim = (1, 1), asIs = False, outputFolder = None, scale = 1.1, driver = 'png'):
+        self.lytManager = self.pj_instance.layoutManager()
+
         printLayoutName = layoutParams[0]
         feature = layoutParams[1]
+
+        layout = self.lytManager.layoutByName(layoutParams[0])
+
+        if isAtlas:
+            layout.atlas().beginRender()
+            layout.atlas().seekTo(layoutParams[1])
+            layout.atlas().refreshCurrentFeature()
+
+        exporter = QgsLayoutExporter(layout)
+        layoutPageSize = layout.pageCollection().page(0).pageSize()
+        aspectRatio = layoutPageSize.width() / layoutPageSize.height()
+
+        if not asIs:
+            # width = Mm(tpl_get_page_width(self.inputTemplate)) * imgDim[0]
+            # height = width * imgDim[1]
+
+        return outputFile
+
         # FEATURE: Jinja custom filter for image formatting from docx template
 
         # SECURITY_FEATURE: Assure that output format is supported by QGIS
@@ -376,15 +396,15 @@ class EasyReports:
         outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
 
         # mapItem = QgsProject().instance().layoutManager().layoutByName(printLayoutName).itemById('map')
-        mapItem = self.pjInstance.layoutManager().layoutByName(printLayoutName).itemById('map')
+        mapItem = self.lytManager.layoutByName(printLayoutName).itemById('map')
         mapItem.zoomToExtent(scale_rectangle(feature.geometry().boundingBox(), scale))
 
         mapLayoutScale = mapItem.mapUnitsToLayoutUnits()
 
         layoutSize = QgsLayoutSize((mapItem.extent().xMaximum() - mapItem.extent().xMinimum()) * mapLayoutScale, (mapItem.extent().yMaximum() - mapItem.extent().yMinimum()) * mapLayoutScale)
-        QgsProject().instance().layoutManager().layoutByName(printLayoutName).pageCollection().pages()[0].setPageSize(layoutSize)
+        self.lytManager.layoutByName(printLayoutName).pageCollection().pages()[0].setPageSize(layoutSize)
 
-        exporter = QgsLayoutExporter(QgsProject().instance().layoutManager().layoutByName(printLayoutName))
+        exporter = QgsLayoutExporter(self.lytManager.layoutByName(printLayoutName))
         exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
 
         # return InlineImage(self.inputTemplate, outputFile, width = width, height = height)
@@ -521,4 +541,3 @@ def qgsAttributesToPythonTypes(qgsFields, qgsAttributes):
 # Custom filters
 # def renderPictureFromPath(path, width = 0, height = 0):
 #     return "TRUE NATTY!!!!"
-
