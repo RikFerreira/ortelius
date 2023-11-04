@@ -387,7 +387,8 @@ class EasyReports:
         
         if outputFolder is None:
             outputFolder = self.tempFolder
-        outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
+        # outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
+        outputFile = os.path.join(outputFolder, self.outputName.format(**self.context) + '_' + printLayoutName + '.' + 'png')
 
         # layout.pageCollection().page(0).setPageSize(QgsLayoutSize(width, height))
         exporter = QgsLayoutExporter(layout)
