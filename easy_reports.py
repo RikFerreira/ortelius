@@ -363,6 +363,7 @@ class EasyReports:
         return True
 
     def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
+        # TODO: This function needs to be splitted in a function for the render and a function for the exporter. It is necessary as there must be an option for display the numeric scale. The current workflow has two subsequent procedures for determine figure width. Solving the former may fix this flaw
         self.lytManager = self.pjInstance.layoutManager()
 
         printLayoutName = layoutParams[0]
@@ -377,10 +378,6 @@ class EasyReports:
         
         layoutPageSize = layout.pageCollection().page(0).pageSize()
         aspectRatio = layoutPageSize.width() / layoutPageSize.height()
-
-        print(layoutPageSize)
-        print(layoutPageSize.width())
-        print(layoutPageSize.height())
 
         width = Mm(tpl_get_page_width(self.inputTemplate)) * figWidth
         height = width / aspectRatio
@@ -480,6 +477,7 @@ class EasyReports:
         return InlineImage(self.inputTemplate, path, width = Mm(tpl_get_page_width(self.inputTemplate)) * width, height = height)
 
     def renderPictureFromBase64(self, path, width, height):
+        # TODO: Currently, the plugin does not support input of layers with Base64 fields. This must be fixed in order to export reports from GIS based on ESRI FileGeodatabase driver
         return -1
 
     def xForMatch(self, value, compare):
