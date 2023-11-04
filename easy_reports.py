@@ -21,10 +21,11 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QSize
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import *
+from qgis.utils import iface
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -361,8 +362,8 @@ class EasyReports:
 
         return True
 
-    def exportPrintLayout(self, layoutParams, isAtlas = True, imgDim = (1, 1), asIs = False, outputFolder = None, scale = 1.1, driver = 'png'):
-        self.lytManager = self.pj_instance.layoutManager()
+    def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
+        self.lytManager = self.pjInstance.layoutManager()
 
         printLayoutName = layoutParams[0]
         feature = layoutParams[1]
@@ -371,16 +372,41 @@ class EasyReports:
 
         if isAtlas:
             layout.atlas().beginRender()
-            layout.atlas().seekTo(layoutParams[1])
+            layout.atlas().seekTo(feature)
             layout.atlas().refreshCurrentFeature()
-
-        exporter = QgsLayoutExporter(layout)
+        
         layoutPageSize = layout.pageCollection().page(0).pageSize()
         aspectRatio = layoutPageSize.width() / layoutPageSize.height()
 
-        if not asIs:
-            # width = Mm(tpl_get_page_width(self.inputTemplate)) * imgDim[0]
-            # height = width * imgDim[1]
+        print(layoutPageSize)
+        print(layoutPageSize.width())
+        print(layoutPageSize.height())
+
+        width = Mm(tpl_get_page_width(self.inputTemplate)) * figWidth
+        height = width / aspectRatio
+        
+        if outputFolder is None:
+            outputFolder = self.tempFolder
+        outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
+
+        # layout.pageCollection().page(0).setPageSize(QgsLayoutSize(width, height))
+        exporter = QgsLayoutExporter(layout)
+        exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
+        return outputFile
+        print(exporter)
+        lytImage = exporter.renderPageToImage(0, QSize(width, height), 300)
+        print(lytImage)
+        if lytImage.save(outputFile, driver):
+            iface.messageBar().pushCritical("E aí?", "DEU CERTO!")
+        else:
+            iface.messageBar().pushCritical("E aí?", "DEU ERRADO!")
+
+        print(layoutParams)
+        print(isAtlas)
+        print(figWidth)
+        print(outputFolder)
+        print(driver)
+        print(outputFile)
 
         return outputFile
 
@@ -541,3 +567,5 @@ def qgsAttributesToPythonTypes(qgsFields, qgsAttributes):
 # Custom filters
 # def renderPictureFromPath(path, width = 0, height = 0):
 #     return "TRUE NATTY!!!!"
+
+
