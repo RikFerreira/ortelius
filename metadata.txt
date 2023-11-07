@@ -6,14 +6,14 @@
 name=TPF Easy Reports
 qgisMinimumVersion=3.0
 description=This plugin performs a mail merge like for QGIS layers.
-version=0.1
+version=0.2.0
 author=Rik Ferreira Alves
 email=rik.alves@tpfe.com.br
 
 about=FULL: This plugin performs a mail merge like for QGIS layers.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/tpfengenharia/EasyReports/issues
+repository=https://github.com/tpfengenharia/EasyReports
 # End of mandatory metadata
 
 # Recommended items:
@@ -23,13 +23,13 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=python,mail merge
 
 homepage=http://homepage
 category=Plugins
 icon=icon.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False

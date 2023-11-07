@@ -497,6 +497,7 @@ class EasyReports:
 
             i = 1
             for mainFeature in self.pjInstance.mapLayersByName(self.inputLayerName)[0].getSelectedFeatures():
+                print(mainFeature.id())
                 QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_feature_index', mainFeature.id())
 
                 self.context = qgsFeatureListToDict([mainFeature], False)
@@ -562,9 +563,3 @@ def scale_rectangle(rectangle, scale = 1.0):
 
 def qgsAttributesToPythonTypes(qgsFields, qgsAttributes):
     qgsType = field.typeName()
-
-# Custom filters
-# def renderPictureFromPath(path, width = 0, height = 0):
-#     return "TRUE NATTY!!!!"
-
-
