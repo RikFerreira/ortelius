@@ -520,8 +520,6 @@ class EasyReports:
 
                 self.context.update(exportedLayouts)
 
-                print(self.context)
-
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
                 self.inputTemplate.save(os.path.join(self.outputDir, self.outputName.format(**self.context)))
