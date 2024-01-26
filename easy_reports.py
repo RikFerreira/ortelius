@@ -375,13 +375,13 @@ class EasyReports:
             layout.atlas().beginRender()
             layout.atlas().seekTo(feature)
             layout.atlas().refreshCurrentFeature()
-        
+
         layoutPageSize = layout.pageCollection().page(0).pageSize()
         aspectRatio = layoutPageSize.width() / layoutPageSize.height()
 
         width = Mm(tpl_get_page_width(self.inputTemplate)) * figWidth
         height = width / aspectRatio
-        
+
         if outputFolder is None:
             outputFolder = self.tempFolder
         # outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
@@ -390,7 +390,9 @@ class EasyReports:
         # layout.pageCollection().page(0).setPageSize(QgsLayoutSize(width, height))
         exporter = QgsLayoutExporter(layout)
         exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
+
         return outputFile
+
         print(exporter)
         lytImage = exporter.renderPageToImage(0, QSize(width, height), 300)
         print(lytImage)
@@ -541,7 +543,6 @@ def qgsFeatureListToDict(featureList, listDict = True):
     features = []
     for feature in featureList:
         tempDict = json.loads(QgsJsonUtils.exportAttributes(feature))
-        # Can't remember why I put this for loop in here, but I suspect it is important
         for key, value in tempDict.items():
             tempDict[key] = "" if value is None else value
         features.append(tempDict)
