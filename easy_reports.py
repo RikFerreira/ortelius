@@ -27,6 +27,8 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.core import *
 from qgis.utils import iface
 
+from PyQt5.QtCore import QByteArray
+
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
@@ -518,6 +520,7 @@ class EasyReports:
                     # self.context[relation_name[0]] = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
 
                 # exportedLayouts = {layoutName: self.exportPrintLayout(mainFeature, layoutName, Mm(tpl_get_page_width(self.inputTemplate))) for layoutName in self.pjPrintLayoutsName}
+                # Replace `mainFeature` with `atlasCoverageLayer`
                 exportedLayouts = {layoutName: (layoutName, mainFeature) for layoutName in self.pjPrintLayoutsName}
 
                 self.context.update(exportedLayouts)
@@ -536,15 +539,26 @@ class EasyReports:
 
 
 # Geopackage types (typeNames) supported by QGIS: ['Integer64', 'String', 'Integer', 'Real', 'Boolean', 'Date', 'String', 'DateTime', 'Binary', 'JSON', 'JSON', 'JSON', 'JSON']
+# attributeMap | Qt Data Types
+# QgsJsonExporter
 def qgsFeatureListToDict(featureList, listDict = True):
     if len(featureList) == 0:
         return []
 
     features = []
     for feature in featureList:
-        tempDict = json.loads(QgsJsonUtils.exportAttributes(feature))
+        tempDict = feature.attributeMap()
+
         for key, value in tempDict.items():
-            tempDict[key] = "" if value is None else value
+            if isinstance(tempDict[key], QDateTime):
+                tempDict[key] = tempDict[key].toString('yyyy/MM/dd HH:mm:ss')
+            if isinstance(tempDict[key], QDate):
+                tempDict[key] = tempDict[key].toString('yyyy/MM/dd')
+            if isinstance(tempDict[key], QTime):
+                tempDict[key] = tempDict[key].toString('HH:mm:ss')
+            if isinstance(tempDict[key], QByteArray):
+                tempDict[key] = tempDict[key].toBase64()
+
         features.append(tempDict)
 
     if not listDict:
