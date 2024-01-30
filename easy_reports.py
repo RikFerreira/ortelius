@@ -236,6 +236,23 @@ class EasyReports:
 
         self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().name())
 
+        # Setup context dictionary
+        self.environment = dict()
+
+        self.environment['global'] = {
+            'project': QgsProject.instance(),
+            'mapCanvas': iface.mapCanvas(),
+            'bbox': [
+                iface.mapCanvas().extent().xMinimum(),
+                iface.mapCanvas().extent().yMinimum(),
+                iface.mapCanvas().extent().xMaximum(),
+                iface.mapCanvas().extent().yMaximum()
+            ],
+            'global_vars': {x: QgsExpressionContextUtils.globalScope().variable(x) for x in QgsExpressionContextUtils.globalScope().variableNames()},
+            'project_vars': {x: QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(x) for x in QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames()},
+            'layer_driver': None
+        }
+
         # Setup custom filters
         self.jinja_env = jinja2.Environment()
         self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
@@ -249,7 +266,10 @@ class EasyReports:
 
     def update_interface(self):
         # Input layer
-        self.inputLayerName = self.dlg.qtInputLayer.currentText()
+        # self.inputLayerName = self.dlg.qtInputLayer.currentText()
+
+        self.environment['global']['layer_driver'] = self.dlg.qtInputLayer.currentText()
+        self.environment['global']['layer_driver_isSpatial'] = self.environment['global']['layer_driver'].isSpatial()
 
         self.echo_log(f'Camada mapeada: {self.inputLayerName}', True)
 
@@ -364,6 +384,12 @@ class EasyReports:
 
         return True
 
+    def render_docx(self):
+        pass
+
+    def renderPrintLayout(self, layoutParams, isAtlas = True):
+        return None
+
     def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
         # TODO: This function needs to be splitted in a function for the render and a function for the exporter. It is necessary as there must be an option for display the numeric scale. The current workflow has two subsequent procedures for determine figure width. Solving the former may fix this flaw
         self.lytManager = self.pjInstance.layoutManager()
@@ -394,77 +420,6 @@ class EasyReports:
         exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
 
         return outputFile
-
-        print(exporter)
-        lytImage = exporter.renderPageToImage(0, QSize(width, height), 300)
-        print(lytImage)
-        if lytImage.save(outputFile, driver):
-            iface.messageBar().pushCritical("E aí?", "DEU CERTO!")
-        else:
-            iface.messageBar().pushCritical("E aí?", "DEU ERRADO!")
-
-        print(layoutParams)
-        print(isAtlas)
-        print(figWidth)
-        print(outputFolder)
-        print(driver)
-        print(outputFile)
-
-        return outputFile
-
-        # FEATURE: Jinja custom filter for image formatting from docx template
-
-        # SECURITY_FEATURE: Assure that output format is supported by QGIS
-        # if not driver in ('png', 'jpg'):
-        #     return False
-
-        if outputFolder is None:
-            outputFolder = self.tempFolder
-
-        outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
-
-        # mapItem = QgsProject().instance().layoutManager().layoutByName(printLayoutName).itemById('map')
-        mapItem = self.lytManager.layoutByName(printLayoutName).itemById('map')
-        mapItem.zoomToExtent(scale_rectangle(feature.geometry().boundingBox(), scale))
-
-        mapLayoutScale = mapItem.mapUnitsToLayoutUnits()
-
-        layoutSize = QgsLayoutSize((mapItem.extent().xMaximum() - mapItem.extent().xMinimum()) * mapLayoutScale, (mapItem.extent().yMaximum() - mapItem.extent().yMinimum()) * mapLayoutScale)
-        self.lytManager.layoutByName(printLayoutName).pageCollection().pages()[0].setPageSize(layoutSize)
-
-        exporter = QgsLayoutExporter(self.lytManager.layoutByName(printLayoutName))
-        exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
-
-        # return InlineImage(self.inputTemplate, outputFile, width = width, height = height)
-        return outputFile
-
-    ## Futuro: implementar opção JPG ou PNG
-    # def exportPrintLayout(self, printLayoutName, scale = 1.1, feature, outputFolder = None, driver = 'png'):
-        # # FEATURE: Jinja custom filter for image formatting from docx template
-
-        # # SECURITY_FEATURE: Assure that output format is supported by QGIS
-        # # if not driver in ('png', 'jpg'):
-        # #     return False
-
-        # if outputFolder is None:
-        #     outputFolder = self.tempFolder
-
-        # outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
-
-        # # mapItem = QgsProject().instance().layoutManager().layoutByName(printLayoutName).itemById('map')
-        # mapItem = self.pjInstance.layoutManager().layoutByName(printLayoutName).itemById('map')
-        # mapItem.zoomToExtent(scale_rectangle(feature.geometry().boundingBox(), scale))
-
-        # mapLayoutScale = mapItem.mapUnitsToLayoutUnits()
-
-        # layoutSize = QgsLayoutSize((mapItem.extent().xMaximum() - mapItem.extent().xMinimum()) * mapLayoutScale, (mapItem.extent().yMaximum() - mapItem.extent().yMinimum()) * mapLayoutScale)
-        # QgsProject().instance().layoutManager().layoutByName(printLayoutName).pageCollection().pages()[0].setPageSize(layoutSize)
-
-        # exporter = QgsLayoutExporter(QgsProject().instance().layoutManager().layoutByName(printLayoutName))
-        # exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
-
-        # # return InlineImage(self.inputTemplate, outputFile, width = width, height = height)
-        # return outputFile
 
     # def exportQrCode(self, feature):
         # This is the logic of the method
