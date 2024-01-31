@@ -411,10 +411,28 @@ class EasyReports:
             'feature_obj': feature,
             'feature_id': feature.id(),
             'feature_wkt': feature.geometry().asWkt() if layer.isSpatial() else None,
-            'feature_geojson': json.loads(feature.geometry().asJson()) if layer.isSpatial() else None,
+            'feature_geojson': feature.geometry().asJson() if layer.isSpatial() else None,
             'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() else None
             'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() else None,
         })
+
+        attr_dict = {}
+        if layer.type() == QgsMapLayerType.VectorLayer:
+            for field in layer.fields().toList():
+                value = feature[field.name()]
+
+                if isinstance(value, QDateTime):
+                    value = value.toString('yyyy/MM/dd HH:mm:ss')
+                if isinstance(value, QDate):
+                    value = value.toString('yyyy/MM/dd')
+                if isinstance(value, QTime):
+                    value = value.toString('HH:mm:ss')
+                if isinstance(value, QByteArray):
+                    value = value.toBase64()
+
+                attr_dict[field.name()] = value
+
+        env_feature.update(attr_dict)
 
         for relation in self.relations:
             related_features = relation.getRelatedFeatures(feature)
