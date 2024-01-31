@@ -211,7 +211,7 @@ class EasyReports:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            self.populate_relations()
+            pass
 
     def setup_interface(self):
         # Project level attributes
@@ -243,7 +243,6 @@ class EasyReports:
         self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
         self.jinja_env.filters['xForMatch'] = self.xForMatch
         self.jinja_env.filters['exportPrintLayout'] = self.exportPrintLayout
-
         # self.jinja_env.filters['renderPictureFromBase64'] = self.renderPictureFromBase64
         # self.jinja_env.filters['multipleCheckBoxes'] = self.multipleCheckBoxes
 
@@ -259,51 +258,7 @@ class EasyReports:
         self.echo_log(f'Camada mapeada: {self.inputLayerName}', True)
 
         self.populate_layouts()
-        self.populate_relations()
-
-    def populate_relations(self):
-        pj_relations = self.pjInstance.relationManager().relations()
-        self.pjRelations = {key: pj_relations[key] for key in pj_relations}
-
-        # Boolean flags for position of input in relations. Do not consider relations that do not refer to input_layer
-        input_layer_is_parent = [relations.referencedLayer().name() == self.inputLayerName for relations in list(self.pjRelations.values())]
-        input_layer_is_child = [relations.referencingLayer().name() == self.inputLayerName for relations in list(self.pjRelations.values())]
-
-        self.relationsWhereInputIsParent = list(compress(list(self.pjRelations.values()), input_layer_is_parent))
-        self.relationsWhereInputIsChild = list(compress(list(self.pjRelations.values()), input_layer_is_child))
-
-        # Get child and parent layers and layer names
-        child_layers = [relation.referencingLayer() for relation in self.relationsWhereInputIsParent]
-        child_layers_name = [child.name() for child in child_layers]
-        parent_layers = [relation.referencedLayer() for relation in self.relationsWhereInputIsChild]
-        parent_layers_name = [parent.name() for parent in parent_layers]
-
-        # Get all unrelated layers to present to user in dialog
-        unrelated_layers_name = [layer_name for layer_name in [layer_name.name() for layer_name in self.pjLayers] if layer_name not in [self.inputLayerName] + child_layers_name + parent_layers_name]
-        unrelated_layers = [self.pjInstance.mapLayersByName(layer_name)[0] for layer_name in unrelated_layers_name]
-        unrelated_vector_layers = [layer.name() for layer in unrelated_layers if isinstance(layer, QgsVectorLayer)]
-        unrelated_raster_layers = [layer.name() for layer in unrelated_layers if isinstance(layer, QgsRasterLayer)]
-
-        self.dlg.qtParentList.clear()
-        self.dlg.qtChildList.clear()
-        self.dlg.qtListUnrelatedVector.clear()
-        self.dlg.qtListUnrelatedRaster.clear()
-
-        self.dlg.qtParentList.addItems(child_layers_name)
-        self.dlg.qtChildList.addItems(parent_layers_name)
-        self.dlg.qtListUnrelatedVector.addItems(unrelated_vector_layers)
-        self.dlg.qtListUnrelatedRaster.addItems(unrelated_raster_layers)
-
-        self.dlg.qtParentList.selectAll()
-        self.dlg.qtChildList.selectAll()
-        self.dlg.qtListUnrelatedVector.selectAll()
-        self.dlg.qtListUnrelatedRaster.clearSelection()
-
-        self.echo_log(f'Updated relations\n' \
-                      f"Child layers: {len(child_layers_name)}\n" \
-                      f"Parent layers: {len(parent_layers_name)}\n" \
-                      f"Unrelated vector layers: {len(unrelated_vector_layers)}\n" \
-                      f"Unrelated raster layers: {len(unrelated_raster_layers)}\n")
+        self.pj_relations = self.pjInstance.relationManager().relations()
 
     def populate_layouts(self):
         pj_print_layouts = {layout.name(): layout for layout in self.pjInstance.layoutManager().layouts()}
@@ -434,7 +389,7 @@ class EasyReports:
 
         env_feature.update(attr_dict)
 
-        for relation in self.relations:
+        for relation in self.pj_relations:
             related_features = relation.getRelatedFeatures(feature)
             related_layer = relation.referencingLayer()
 
