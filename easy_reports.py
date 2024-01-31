@@ -94,7 +94,6 @@ class EasyReports:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('EasyReports', message)
 
-
     def add_action(
         self,
         icon_path,
@@ -191,7 +190,6 @@ class EasyReports:
                 action)
             self.iface.removeToolBarIcon(action)
 
-
     def run(self):
         """Run method that performs all the real work"""
 
@@ -238,20 +236,7 @@ class EasyReports:
 
         # Setup context dictionary
         self.environment = dict()
-
-        self.environment['global'] = {
-            'project': QgsProject.instance(),
-            'mapCanvas': iface.mapCanvas(),
-            'bbox': [
-                iface.mapCanvas().extent().xMinimum(),
-                iface.mapCanvas().extent().yMinimum(),
-                iface.mapCanvas().extent().xMaximum(),
-                iface.mapCanvas().extent().yMaximum()
-            ],
-            'global_vars': {x: QgsExpressionContextUtils.globalScope().variable(x) for x in QgsExpressionContextUtils.globalScope().variableNames()},
-            'project_vars': {x: QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(x) for x in QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames()},
-            'layer_driver': None
-        }
+        self.env_global = dict()
 
         # Setup custom filters
         self.jinja_env = jinja2.Environment()
@@ -268,14 +253,13 @@ class EasyReports:
         # Input layer
         # self.inputLayerName = self.dlg.qtInputLayer.currentText()
 
-        self.environment['global']['layer_driver'] = self.dlg.qtInputLayer.currentText()
-        self.environment['global']['layer_driver_isSpatial'] = self.environment['global']['layer_driver'].isSpatial()
+        self.env_global['layer_driver'] = self.dlg.qtInputLayer.currentText()
+        self.env_global['layer_driver_isSpatial'] = self.env_global['layer_driver'].isSpatial()
 
         self.echo_log(f'Camada mapeada: {self.inputLayerName}', True)
 
         self.populate_layouts()
         self.populate_relations()
-
 
     def populate_relations(self):
         pj_relations = self.pjInstance.relationManager().relations()
@@ -320,7 +304,6 @@ class EasyReports:
                       f"Parent layers: {len(parent_layers_name)}\n" \
                       f"Unrelated vector layers: {len(unrelated_vector_layers)}\n" \
                       f"Unrelated raster layers: {len(unrelated_raster_layers)}\n")
-
 
     def populate_layouts(self):
         pj_print_layouts = {layout.name(): layout for layout in self.pjInstance.layoutManager().layouts()}
@@ -383,6 +366,67 @@ class EasyReports:
                       f"Print layouts: {len(self.pjPrintLayoutsName)}\n")
 
         return True
+
+    def mount_global_dict(self):
+        env_global = {
+            'project_obj': QgsProject.instance(),
+            'mapCanvas': iface.mapCanvas(),
+            'project_bbox': [
+                iface.mapCanvas().extent().xMinimum(),
+                iface.mapCanvas().extent().yMinimum(),
+                iface.mapCanvas().extent().xMaximum(),
+                iface.mapCanvas().extent().yMaximum()
+            ],
+            'global_vars': {x: QgsExpressionContextUtils.globalScope().variable(x) for x in QgsExpressionContextUtils.globalScope().variableNames()},
+            'project_vars': {x: QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(x) for x in QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames()}
+        }
+
+        return env_global
+
+    def mount_layer_dict(self, layer):
+        env_layer = {
+            'layer_obj': layer,
+            'layer_type': get_layer_type(layer.type()),
+            'layer_geometry_type': get_geometry_type(layer.geometryType()),
+            'layer_name': layer.name(),
+            'layer_id': layer.id(),
+            'layer_source': layer.sourceName(),
+            'layer_extent': layer.extent(),
+            'layer_bbox': [
+                layer.extent().xMinimum(),
+                layer.extent().yMinimum(),
+                layer.extent().xMaximum(),
+                layer.extent().yMaximum()
+            ],
+        }
+
+        return env_layer
+
+    def mount_feature_dict(self, feature, layer):
+        env_feature = dict()
+
+        env_feature.update(self.mount_layer_dict(layer))
+
+        env_feature.update({
+            'feature_obj': feature,
+            'feature_id': feature.id(),
+            'feature_wkt': feature.geometry().asWkt() if layer.isSpatial() else None,
+            'feature_geojson': json.loads(feature.geometry().asJson()) if layer.isSpatial() else None,
+            'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() else None
+            'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() else None,
+        })
+
+        for relation in self.relations:
+            related_features = relation.getRelatedFeatures(feature)
+            related_layer = relation.referencingLayer()
+
+            relation_list = list()
+            for rel_feat in related_features:
+                relation_list.append(self.mount_feature_dict(rel_feat, related_layer))
+
+            env_feature.update({related_layer.name(): relation_list})
+
+        return env_feature
 
     def render_docx(self):
         pass
@@ -449,7 +493,6 @@ class EasyReports:
         self.dlg.qtTabWidget.setCurrentIndex(4)
 
         if self.check_input():
-
             self.progressBarStep = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(list(self.pjInstance.mapLayersByName(self.inputLayerName)[0].getFeatures()))
             self.progressBar = 0
             self.dlg.qtProgressBar.setValue(self.progressBar)
@@ -531,3 +574,38 @@ def scale_rectangle(rectangle, scale = 1.0):
 
 def qgsAttributesToPythonTypes(qgsFields, qgsAttributes):
     qgsType = field.typeName()
+
+
+def get_layer_type(layer_type):
+    if layer_type == QgsMapLayerType.VectorLayer:
+        type = "vector"
+    elif layer_type == QgsMapLayerType.RasterLayer:
+        type = "raster"
+    elif layer_type == QgsMapLayerType.PluginLayer:
+        type = "plugin"
+    elif layer_type == QgsMapLayerType.MeshLayer:
+        type = "mesh"
+    elif layer_type == QgsMapLayerType.VectorTileLayer:
+        type = "vector_tile"
+    elif layer_type == QgsMapLayerType.AnnotationLayer:
+        type = "annotation"
+    else:
+        type = "unknown"
+
+    return type
+
+def get_geometry_type(geometry_type):
+    if geometry_type == QgsWkbTypes.PointGeometry:
+        type = "point"
+    elif geometry_type == QgsWkbTypes.LineGeometry:
+        type = "line"
+    elif geometry_type == QgsWkbTypes.PolygonGeometry:
+        type = "polygon"
+    elif geometry_type == QgsWkbTypes.UnknownGeometry:
+        type = "unknown"
+    elif geometry_type == QgsWkbTypes.NullGeometry:
+        type = "null_geometry"
+    else:
+        type = "unknown"
+
+    return type
