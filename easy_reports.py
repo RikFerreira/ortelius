@@ -483,6 +483,10 @@ class EasyReports:
 
         return outputFile
 
+    # # # # # # # # # # # # # # # #
+    # Custom filters              #
+    # # # # # # # # # # # # # # # #
+
     # def exportQrCode(self, feature):
         # This is the logic of the method
         # Transform feature to WGS 84 (EPSG: 4326)
@@ -491,9 +495,6 @@ class EasyReports:
         # Create QR Code from the previous string
         # Export it to temp folder
 
-    # # # # # # # # # # # # # # # #
-    # Custom filters              #
-    # # # # # # # # # # # # # # # #
     def renderPictureFromPath(self, path, width = None, height = None):
         return InlineImage(self.inputTemplate, path, width = Mm(tpl_get_page_width(self.inputTemplate)) * width, height = height)
 
@@ -589,10 +590,6 @@ def tpl_get_page_width(template, ratio=1.0):
 def scale_rectangle(rectangle, scale = 1.0):
     rect_dim = {'width': rectangle.xMaximum() - rectangle.xMinimum(), 'height': rectangle.yMaximum() - rectangle.yMinimum()}
     return QgsRectangle(rectangle.center().x() - rect_dim['width']/2.0 * scale, rectangle.center().y() - rect_dim['height']/2.0 * scale, rectangle.center().x() + rect_dim['width']/2.0 * scale, rectangle.center().y() + rect_dim['height']/2.0 * scale)
-
-def qgsAttributesToPythonTypes(qgsFields, qgsAttributes):
-    qgsType = field.typeName()
-
 
 def get_layer_type(layer_type):
     if layer_type == QgsMapLayerType.VectorLayer:
