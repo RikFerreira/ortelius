@@ -27,7 +27,7 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.core import *
 from qgis.utils import iface
 
-from PyQt5.QtCore import QByteArray
+from PyQt5.QtCore import QDateTime, QDate, QTime, QByteArray
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -250,14 +250,12 @@ class EasyReports:
 
     def update_interface(self):
         # Input layer
-        # self.inputLayerName = self.dlg.qtInputLayer.currentText()
+        self.input_layer = self.pjInstance.mapLayersByName(self.dlg.qtInputLayer.currentText())[0]
 
-        self.env_global['layer_driver'] = self.dlg.qtInputLayer.currentText()
-        self.env_global['layer_driver_isSpatial'] = self.env_global['layer_driver'].isSpatial()
-
-        self.echo_log(f'Camada mapeada: {self.inputLayerName}', True)
+        self.echo_log(f'Camada mapeada: {self.input_layer}', True)
 
         self.populate_layouts()
+
         self.pj_relations = self.pjInstance.relationManager().relations()
 
     def populate_layouts(self):
@@ -367,8 +365,8 @@ class EasyReports:
             'feature_id': feature.id(),
             'feature_wkt': feature.geometry().asWkt() if layer.isSpatial() else None,
             'feature_geojson': feature.geometry().asJson() if layer.isSpatial() else None,
-            'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() else None
-            'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() else None,
+            'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() else None,
+            'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() else None
         })
 
         attr_dict = {}
@@ -389,7 +387,7 @@ class EasyReports:
 
         env_feature.update(attr_dict)
 
-        for relation in self.pj_relations:
+        for relation in self.pj_relations.values():
             related_features = relation.getRelatedFeatures(feature)
             related_layer = relation.referencingLayer()
 
@@ -472,30 +470,36 @@ class EasyReports:
             self.dlg.qtProgressBar.setValue(self.progressBar)
 
             i = 1
-            for mainFeature in self.pjInstance.mapLayersByName(self.inputLayerName)[0].getSelectedFeatures():
-                print(mainFeature.id())
+            for mainFeature in self.input_layer.getSelectedFeatures():
                 QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_feature_index', mainFeature.id())
 
-                self.context = qgsFeatureListToDict([mainFeature], False)
+                # self.context = qgsFeatureListToDict([mainFeature], False)
 
-                for relation_name in zip(self.childLayersName, self.relationsWhereInputIsParent):
-                    relatedFeatures = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
-                    if len(relatedFeatures) == 1:
-                        relatedFeatures = relatedFeatures[0]
-                    self.context[relation_name[0]] = relatedFeatures
+                # for relation_name in zip(self.childLayersName, self.relationsWhereInputIsParent):
+                #     relatedFeatures = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
+                #     if len(relatedFeatures) == 1:
+                #         relatedFeatures = relatedFeatures[0]
+                #     self.context[relation_name[0]] = relatedFeatures
 
-                for relation_name in zip(self.parentLayersName, self.relationsWhereInputIsChild):
-                    relatedFeatures = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
-                    if len(relatedFeatures) == 1:
-                        relatedFeatures = relatedFeatures[0]
-                    self.context[relation_name[0]] = relatedFeatures
-                    # self.context[relation_name[0]] = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
+                # for relation_name in zip(self.parentLayersName, self.relationsWhereInputIsChild):
+                #     relatedFeatures = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
+                #     if len(relatedFeatures) == 1:
+                #         relatedFeatures = relatedFeatures[0]
+                #     self.context[relation_name[0]] = relatedFeatures
+                #     # self.context[relation_name[0]] = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
 
                 # exportedLayouts = {layoutName: self.exportPrintLayout(mainFeature, layoutName, Mm(tpl_get_page_width(self.inputTemplate))) for layoutName in self.pjPrintLayoutsName}
                 # Replace `mainFeature` with `atlasCoverageLayer`
-                exportedLayouts = {layoutName: (layoutName, mainFeature) for layoutName in self.pjPrintLayoutsName}
+                # exportedLayouts = {layoutName: (layoutName, mainFeature) for layoutName in self.pjPrintLayoutsName}
 
-                self.context.update(exportedLayouts)
+                # self.context.update(exportedLayouts)
+
+                self.context = dict()
+
+                self.context.update(self.mount_global_dict())
+                self.context.update(self.mount_feature_dict(mainFeature, self.pjInstance.mapLayersByName(self.inputLayerName)[0]))
+
+                print(i)
 
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
