@@ -517,10 +517,6 @@ class EasyReports:
 # attributeMap | Qt Data Types
 # QgsJsonExporter
 
-def scale_rectangle(rectangle, scale = 1.0):
-    rect_dim = {'width': rectangle.xMaximum() - rectangle.xMinimum(), 'height': rectangle.yMaximum() - rectangle.yMinimum()}
-    return QgsRectangle(rectangle.center().x() - rect_dim['width']/2.0 * scale, rectangle.center().y() - rect_dim['height']/2.0 * scale, rectangle.center().x() + rect_dim['width']/2.0 * scale, rectangle.center().y() + rect_dim['height']/2.0 * scale)
-
 def get_layer_type(layer_type):
     if layer_type == QgsMapLayerType.VectorLayer:
         type = "vector"
