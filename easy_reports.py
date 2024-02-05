@@ -516,7 +516,6 @@ class EasyReports:
 # Geopackage types (typeNames) supported by QGIS: ['Integer64', 'String', 'Integer', 'Real', 'Boolean', 'Date', 'String', 'DateTime', 'Binary', 'JSON', 'JSON', 'JSON', 'JSON']
 # attributeMap | Qt Data Types
 # QgsJsonExporter
-def qgsFeatureListToDict(featureList, listDict = True):
 
 def scale_rectangle(rectangle, scale = 1.0):
     rect_dim = {'width': rectangle.xMaximum() - rectangle.xMinimum(), 'height': rectangle.yMaximum() - rectangle.yMinimum()}
