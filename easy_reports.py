@@ -381,7 +381,7 @@ class EasyReports:
                 if isinstance(value, QTime):
                     value = value.toString('HH:mm:ss')
                 if isinstance(value, QByteArray):
-                    value = value.toBase64()
+                    value = value.toBase64().data()
 
                 attr_dict[field.name()] = value
 
