@@ -18,7 +18,11 @@
 - `{{ NameCol }}`: A column named `NameCol` will be used to fill this placeholder.
 - `{{ PrintLayout }}`: A tuple formed by a `QgsLayout` and a `QgsFeature` objects is returned. It must be passed to other filters in order to print a map or return some map attributes like scale, CRS etc.
 
+### Structure
+
 ### Filters
+
+Filters are custom functions designed to extend the capabilities of the DOCX reports. Here is a list of the custom filters implemented by this plugin:
 
 - `exportPrintLayout`: Expects a `PrintLayout` tuple, renders the map and returns a path pointing to the exported PNG figure. Parameters:
   - `figWidth = 1.0`:
