@@ -29,3 +29,9 @@
 - `renderPictureFromBase64`:
 - `xForMatch`:
 - `multipleCheckBoxes`:
+
+### Further reading
+
+- Although there is a Sphinx API documentation for PyQGIS, QGIS C++ API Reference is preferrable as it reveals the big picture of QGIS classes.
+  - [C++ API Reference](https://api.qgis.org/api/index.html)
+  - [Python API Reference](https://qgis.org/pyqgis/3.0/)

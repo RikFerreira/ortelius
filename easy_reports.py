@@ -451,9 +451,11 @@ class EasyReports:
     def renderPictureFromPath(self, path, width = None, height = None):
         return InlineImage(self.inputTemplate, path, width = Mm(tpl_get_page_width(self.inputTemplate)) * width, height = height)
 
-    def renderPictureFromBase64(self, path, width, height):
-        # TODO: Currently, the plugin does not support input of layers with Base64 fields. This must be fixed in order to export reports from GIS based on ESRI FileGeodatabase driver
-        return -1
+    def renderPictureFromBase64(self, base64string, filename):
+        with open(filename, 'wb') as fout:
+            fout.write(base64.decodebytes(base64string))
+
+        return filename
 
     def xForMatch(self, value, compare):
         return "X" if value == compare else ""
