@@ -451,6 +451,8 @@ class EasyReports:
         # Export it to temp folder
 
     def renderPictureFromPath(self, path, width = None, height = None):
+        # TODO: This method does not work well with portrait images. The method rotates the image before render.
+
         section = self.inputTemplate.get_docx().sections[0]
         section_width = (section.page_width - (section.left_margin + section.right_margin)) * 1.0 / 36000
 
@@ -488,28 +490,8 @@ class EasyReports:
 
             i = 1
             for mainFeature in self.input_layer.getSelectedFeatures():
+                # TODO: Figure out why this loop runs 3 times
                 QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_feature_index', mainFeature.id())
-
-                # self.context = qgsFeatureListToDict([mainFeature], False)
-
-                # for relation_name in zip(self.childLayersName, self.relationsWhereInputIsParent):
-                #     relatedFeatures = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
-                #     if len(relatedFeatures) == 1:
-                #         relatedFeatures = relatedFeatures[0]
-                #     self.context[relation_name[0]] = relatedFeatures
-
-                # for relation_name in zip(self.parentLayersName, self.relationsWhereInputIsChild):
-                #     relatedFeatures = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
-                #     if len(relatedFeatures) == 1:
-                #         relatedFeatures = relatedFeatures[0]
-                #     self.context[relation_name[0]] = relatedFeatures
-                #     # self.context[relation_name[0]] = qgsFeatureListToDict([x for x in relation_name[1].getRelatedFeatures(mainFeature)])
-
-                # exportedLayouts = {layoutName: self.exportPrintLayout(mainFeature, layoutName, Mm(tpl_get_page_width(self.inputTemplate))) for layoutName in self.pjPrintLayoutsName}
-                # Replace `mainFeature` with `atlasCoverageLayer`
-                # exportedLayouts = {layoutName: (layoutName, mainFeature) for layoutName in self.pjPrintLayoutsName}
-
-                # self.context.update(exportedLayouts)
 
                 self.context = dict()
 
@@ -535,33 +517,6 @@ class EasyReports:
 # attributeMap | Qt Data Types
 # QgsJsonExporter
 def qgsFeatureListToDict(featureList, listDict = True):
-    if len(featureList) == 0:
-        return []
-
-    features = []
-    for feature in featureList:
-        tempDict = feature.attributeMap()
-
-        for key, value in tempDict.items():
-            if isinstance(tempDict[key], QDateTime):
-                tempDict[key] = tempDict[key].toString('yyyy/MM/dd HH:mm:ss')
-            if isinstance(tempDict[key], QDate):
-                tempDict[key] = tempDict[key].toString('yyyy/MM/dd')
-            if isinstance(tempDict[key], QTime):
-                tempDict[key] = tempDict[key].toString('HH:mm:ss')
-            if isinstance(tempDict[key], QByteArray):
-                tempDict[key] = tempDict[key].toBase64()
-
-        features.append(tempDict)
-
-    if not listDict:
-        features = features[0]
-
-    return features
-
-def tpl_get_page_width(template, ratio=1.0):
-    section = template.get_docx().sections[0]
-    return (section.page_width - (section.left_margin + section.right_margin)) * ratio / 36000
 
 def scale_rectangle(rectangle, scale = 1.0):
     rect_dim = {'width': rectangle.xMaximum() - rectangle.xMinimum(), 'height': rectangle.yMaximum() - rectangle.yMinimum()}
