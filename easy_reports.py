@@ -42,6 +42,7 @@ from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
 import jinja2
 import json
+import base64
 # import qrcode
 
 class EasyReports:
@@ -240,10 +241,10 @@ class EasyReports:
 
         # Setup custom filters
         self.jinja_env = jinja2.Environment()
-        self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
         self.jinja_env.filters['xForMatch'] = self.xForMatch
         self.jinja_env.filters['exportPrintLayout'] = self.exportPrintLayout
         self.jinja_env.filters['exportPictureFromBase64'] = self.exportPictureFromBase64
+        self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
         # self.jinja_env.filters['renderPictureFromBase64'] = self.renderPictureFromBase64
         # self.jinja_env.filters['multipleCheckBoxes'] = self.multipleCheckBoxes
 
@@ -450,7 +451,15 @@ class EasyReports:
         # Export it to temp folder
 
     def renderPictureFromPath(self, path, width = None, height = None):
-        return InlineImage(self.inputTemplate, path, width = Mm(tpl_get_page_width(self.inputTemplate)) * width, height = height)
+        section = self.inputTemplate.get_docx().sections[0]
+        section_width = (section.page_width - (section.left_margin + section.right_margin)) * 1.0 / 36000
+
+        if width <= 1:
+            image_width = Mm(section_width) * width
+        else:
+            image_width = Mm(width)
+
+        return InlineImage(self.inputTemplate, path, width = image_width, height = height)
 
     def exportPictureFromBase64(self, base64string, filename):
         with open(filename, 'wb') as fout:
