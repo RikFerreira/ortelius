@@ -243,6 +243,7 @@ class EasyReports:
         self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
         self.jinja_env.filters['xForMatch'] = self.xForMatch
         self.jinja_env.filters['exportPrintLayout'] = self.exportPrintLayout
+        self.jinja_env.filters['exportPictureFromBase64'] = self.exportPictureFromBase64
         # self.jinja_env.filters['renderPictureFromBase64'] = self.renderPictureFromBase64
         # self.jinja_env.filters['multipleCheckBoxes'] = self.multipleCheckBoxes
 
@@ -451,7 +452,7 @@ class EasyReports:
     def renderPictureFromPath(self, path, width = None, height = None):
         return InlineImage(self.inputTemplate, path, width = Mm(tpl_get_page_width(self.inputTemplate)) * width, height = height)
 
-    def renderPictureFromBase64(self, base64string, filename):
+    def exportPictureFromBase64(self, base64string, filename):
         with open(filename, 'wb') as fout:
             fout.write(base64.decodebytes(base64string))
 
