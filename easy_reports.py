@@ -459,7 +459,12 @@ class EasyReports:
         else:
             image_width = Mm(width)
 
-        return InlineImage(self.inputTemplate, path, width = image_width, height = height)
+        if height:
+            image_height = Mm(height)
+        else:
+            image_height = height
+
+        return InlineImage(self.inputTemplate, path, width = image_width, height = image_height)
 
     def exportPictureFromBase64(self, base64string, filename):
         with open(filename, 'wb') as fout:
