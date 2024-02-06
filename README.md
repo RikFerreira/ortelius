@@ -27,7 +27,7 @@ Each document has a complex dictionary with attributes extracted from the relati
   - `layer name`
   - `feature_obj`: QgsFeature object
   - `feature_id`: Feature ID (equivalent of `$id` in QGIS expression)
-  - `feature_wkt`: Feature geometry as well-known text
+  - `feature_wkt`: Feature geometry as a well-known text string
   - `feature_geojson`: Feature geometry as GeoJSON string
   - `feature_extent`: QgsRectangle of the feature extent
   - `feature_centroid`: QgsPointXY object of the feature centroid
