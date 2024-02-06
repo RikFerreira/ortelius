@@ -401,6 +401,9 @@ class EasyReports:
 
         return env_feature
 
+    def mount_layouts_dict(self):
+        pass
+
     def render_docx(self):
         pass
 
