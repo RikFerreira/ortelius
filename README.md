@@ -20,6 +20,20 @@
 
 ### Structure
 
+Each document has a complex dictionary with attributes extracted from the relational model centered in the reference layer. You can access all the attributes of the reference layer by calling the attribute name. Other dimenions are stores as dictionaries at the first level of the context dictionary, so:
+
+- Context
+  - `global`
+  - `layer name`
+  - `feature_obj`: QgsFeature object
+  - `feature_id`: Feature ID (equivalent of `$id` in QGIS expression)
+  - `feature_wkt`: Feature geometry as well-known text
+  - `feature_geojson`: Feature geometry as GeoJSON string
+  - `feature_extent`: QgsRectangle of the feature extent
+  - `feature_centroid`: QgsPointXY object of the feature centroid
+  - All the attributes of the feature
+  - `related layer name`
+
 ### Filters
 
 Filters are custom functions designed to extend the capabilities of the DOCX reports. Here is a list of the custom filters implemented by this plugin:
