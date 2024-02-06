@@ -402,7 +402,16 @@ class EasyReports:
         return env_feature
 
     def mount_layouts_dict(self):
-        pass
+        self.lytMManager = self.pjInstance.layoutManager()
+
+        env_layouts = {
+            'layouts': dict()
+        }
+
+        for lyt in self.lytManager.printLayouts():
+            env_layouts['layouts'].update({lyt.name(): {'layout_obj': lyt, 'atlas': lyt.atlas()}})
+
+        return env_layouts
 
     def render_docx(self):
         pass
