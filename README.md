@@ -31,8 +31,12 @@ Each document has a complex dictionary with attributes extracted from the relati
   - `feature_geojson`: Feature geometry as GeoJSON string
   - `feature_extent`: QgsRectangle of the feature extent
   - `feature_centroid`: QgsPointXY object of the feature centroid
-  - All the attributes of the feature
+  - All the attributes of the feature are called by their name, not their alias
   - `related layer name`
+  - `layouts`
+    - `layout name`
+      - `layout_obj`: QgsPrintLayout object
+      - `layout_atlas`: QgsLayoutAtlas object
 
 ### Filters
 

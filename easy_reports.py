@@ -409,12 +409,14 @@ class EasyReports:
         }
 
         for lyt in self.lytManager.printLayouts():
-            env_layouts['layouts'].update({lyt.name(): {'layout_obj': lyt, 'atlas': lyt.atlas()}})
+            env_layouts['layouts'].update({lyt.name(): {'layout_obj': lyt, 'layout_atlas': lyt.atlas()}})
 
         return env_layouts
 
     def render_docx(self):
         pass
+
+    def exportPrintLayout(self)
 
     def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
         # TODO: This function needs to be splitted in a function for the render and a function for the exporter. It is necessary as there must be an option for display the numeric scale. The current workflow has two subsequent procedures for determine figure width. Solving the former may fix this flaw
@@ -506,6 +508,7 @@ class EasyReports:
 
                 self.context.update(self.mount_global_dict())
                 self.context.update(self.mount_feature_dict(mainFeature, self.pjInstance.mapLayersByName(self.inputLayerName)[0]))
+                self.context.update(self.mount_layouts_dict())
 
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
