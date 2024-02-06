@@ -416,38 +416,52 @@ class EasyReports:
     def render_docx(self):
         pass
 
-    def exportPrintLayout(self)
+    def exportPrintLayout(self, layout_dict, feature_dict, output_dir = None):
+        if layout_dict['layout_atlas'].enabled():
+            layout_dict['layout_atlas'].beginRender()
+            layout_dict['layout_atlas'].seekTo(feature_dict['feature_obj'])
+            layout_dict['layout_atlas'].refreshCurrentFeature()
 
-    def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
-        # TODO: This function needs to be splitted in a function for the render and a function for the exporter. It is necessary as there must be an option for display the numeric scale. The current workflow has two subsequent procedures for determine figure width. Solving the former may fix this flaw
-        self.lytManager = self.pjInstance.layoutManager()
+        if not output_dir:
+            output_dir = self.tempFolder
 
-        printLayoutName = layoutParams[0]
-        feature = layoutParams[1]
+        output_file = os.path.join(output_dir, self.outputName.format(**self.context['feature']) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
 
-        layout = self.lytManager.layoutByName(layoutParams[0])
+        exporter = QgsLayoutExporter(layout_dict['layout_obj'])
+        exporter.exportToImage(output_file, QgsLayoutExporter.ImageExportSettings())
 
-        if isAtlas:
-            layout.atlas().beginRender()
-            layout.atlas().seekTo(feature)
-            layout.atlas().refreshCurrentFeature()
+        return output_file
 
-        layoutPageSize = layout.pageCollection().page(0).pageSize()
-        aspectRatio = layoutPageSize.width() / layoutPageSize.height()
+    # def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
+    #     # TODO: This function needs to be splitted in a function for the render and a function for the exporter. It is necessary as there must be an option for display the numeric scale. The current workflow has two subsequent procedures for determine figure width. Solving the former may fix this flaw
+    #     self.lytManager = self.pjInstance.layoutManager()
 
-        width = Mm(tpl_get_page_width(self.inputTemplate)) * figWidth
-        height = width / aspectRatio
+    #     printLayoutName = layoutParams[0]
+    #     feature = layoutParams[1]
 
-        if outputFolder is None:
-            outputFolder = self.tempFolder
-        # outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
-        outputFile = os.path.join(outputFolder, self.outputName.format(**self.context) + '_' + printLayoutName + '.' + 'png')
+    #     layout = self.lytManager.layoutByName(layoutParams[0])
 
-        # layout.pageCollection().page(0).setPageSize(QgsLayoutSize(width, height))
-        exporter = QgsLayoutExporter(layout)
-        exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
+    #     if isAtlas:
+    #         layout.atlas().beginRender()
+    #         layout.atlas().seekTo(feature)
+    #         layout.atlas().refreshCurrentFeature()
 
-        return outputFile
+    #     layoutPageSize = layout.pageCollection().page(0).pageSize()
+    #     aspectRatio = layoutPageSize.width() / layoutPageSize.height()
+
+    #     width = Mm(tpl_get_page_width(self.inputTemplate)) * figWidth
+    #     height = width / aspectRatio
+
+    #     if outputFolder is None:
+    #         outputFolder = self.tempFolder
+    #     # outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
+    #     outputFile = os.path.join(outputFolder, self.outputName.format(**self.context) + '_' + printLayoutName + '.' + 'png')
+
+    #     # layout.pageCollection().page(0).setPageSize(QgsLayoutSize(width, height))
+    #     exporter = QgsLayoutExporter(layout)
+    #     exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
+
+    #     return outputFile
 
     # # # # # # # # # # # # # # # #
     # Custom filters              #
@@ -509,6 +523,8 @@ class EasyReports:
                 self.context.update(self.mount_global_dict())
                 self.context.update(self.mount_feature_dict(mainFeature, self.pjInstance.mapLayersByName(self.inputLayerName)[0]))
                 self.context.update(self.mount_layouts_dict())
+
+                json.dumps(self.context, indent = 4)
 
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
