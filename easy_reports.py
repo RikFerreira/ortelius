@@ -257,19 +257,7 @@ class EasyReports:
 
         self.echo_log(f'Camada mapeada: {self.input_layer}', True)
 
-        self.populate_layouts()
-
         self.pj_relations = self.pjInstance.relationManager().relations()
-
-    def populate_layouts(self):
-        pj_print_layouts = {layout.name(): layout for layout in self.pjInstance.layoutManager().layouts()}
-
-        self.dlg.qtListPrintLayouts.clear()
-        self.dlg.qtListPrintLayouts.addItems(list(pj_print_layouts.keys()))
-        self.dlg.qtListPrintLayouts.selectAll()
-
-        self.echo_log(f'Updated print layouts\n' \
-                      f'Print layouts: {len(pj_print_layouts)}')
 
     def echo_log(self, message, breakbefore = False):
         if breakbefore:
