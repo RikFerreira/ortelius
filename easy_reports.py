@@ -515,6 +515,8 @@ class EasyReports:
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(4)
 
+        QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_template_file', self.inputTemplateFile)
+        QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_dir', self.outputDir)
         QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_name', self.outputName)
 
         if self.check_input():
@@ -529,7 +531,7 @@ class EasyReports:
             self.dlg.qtProgressBar.setValue(self.progressBar)
 
             i = 1
-            for mainFeature in self.input_layer.getSelectedFeatures():
+            for mainFeature in features_iterator:
                 # TODO: Figure out why this loop runs 3 times
                 QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_feature_index', mainFeature.id())
 
