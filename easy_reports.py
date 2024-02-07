@@ -234,6 +234,10 @@ class EasyReports:
         self.dlg.qtInputLayer.addItems(layers_name)
         self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().name())
 
+        self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pjInstance).variable('tpf_template_file'))
+
+        self.dlg.qtQgsOutputDir.setFilePath(QgsExpressionContextUtils.projectScope(self.pjInstance).variable('tpf_output_dir'))
+
         self.dlg.qtOutputName.clear()
         self.dlg.qtOutputName.insert(QgsExpressionContextUtils.projectScope(self.pjInstance).variable('tpf_output_name'))
 
@@ -490,20 +494,22 @@ class EasyReports:
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(4)
 
-        QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_template_file', self.inputTemplateFile)
-        QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_dir', self.outputDir)
-        QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_name', self.outputName)
-
         if self.check_input():
-            # TODO: Parallelize the progress bar
-            # if checkbox is marked...
-            features_iterator = self.input_layer.getSelectedFeatures()
-            # else:
-                # features_iterator = self.input_layer.getFeatures()
+            QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_template_file', self.inputTemplateFile)
+            QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_dir', self.outputDir)
+            QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_name', self.outputName)
 
-            self.progressBarStep = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(list(features_iterator))
+            if self.dlg.qtSelectedFeaturesOnly.isChecked():
+                features_iterator = list(self.input_layer.getSelectedFeatures())
+            else:
+                features_iterator = list(self.input_layer.getFeatures())
+
+            # TODO: Parallelize the progress bar
+            self.progressBarStep = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(features_iterator)
             self.progressBar = 0
             self.dlg.qtProgressBar.setValue(self.progressBar)
+
+            print(features_iterator)
 
             i = 1
             for mainFeature in features_iterator:
@@ -516,11 +522,11 @@ class EasyReports:
                 self.context.update(self.mount_feature_dict(mainFeature, self.pjInstance.mapLayersByName(self.inputLayerName)[0]))
                 self.context.update(self.mount_layouts_dict())
 
-                print(json.dumps(self.context, indent = 4, default = str))
+                # print(json.dumps(self.context, indent = 4, default = str))
 
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
-                self.inputTemplate.save(os.path.join(self.outputDir, self.outputName.format(**self.context)))
+                self.inputTemplate.save(os.path.join(self.outputDir, self.outputName.format(**self.context['feature'])))
 
                 self.progressBar += self.progressBarStep
                 self.dlg.qtProgressBar.setValue(self.progressBar)
