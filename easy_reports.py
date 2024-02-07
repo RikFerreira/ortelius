@@ -215,6 +215,7 @@ class EasyReports:
             pass
 
     def setup_interface(self):
+        # TODO: Reset project directory here
         # Project level attributes
         self.pjInstance = QgsProject.instance()
 
@@ -324,35 +325,39 @@ class EasyReports:
 
     def mount_global_dict(self):
         env_global = {
-            'project_obj': QgsProject.instance(),
-            'mapCanvas': iface.mapCanvas(),
-            'project_bbox': [
-                iface.mapCanvas().extent().xMinimum(),
-                iface.mapCanvas().extent().yMinimum(),
-                iface.mapCanvas().extent().xMaximum(),
-                iface.mapCanvas().extent().yMaximum()
-            ],
-            'global_vars': {x: QgsExpressionContextUtils.globalScope().variable(x) for x in QgsExpressionContextUtils.globalScope().variableNames()},
-            'project_vars': {x: QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(x) for x in QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames()}
+            'global': {
+                'project_obj': QgsProject.instance(),
+                'mapCanvas': iface.mapCanvas(),
+                'project_bbox': [
+                    iface.mapCanvas().extent().xMinimum(),
+                    iface.mapCanvas().extent().yMinimum(),
+                    iface.mapCanvas().extent().xMaximum(),
+                    iface.mapCanvas().extent().yMaximum()
+                ],
+                'global_vars': {x: QgsExpressionContextUtils.globalScope().variable(x) for x in QgsExpressionContextUtils.globalScope().variableNames()},
+                'project_vars': {x: QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(x) for x in QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames()}
+            }
         }
 
         return env_global
 
     def mount_layer_dict(self, layer):
         env_layer = {
-            'layer_obj': layer,
-            'layer_type': get_layer_type(layer.type()),
-            'layer_geometry_type': get_geometry_type(layer.geometryType()),
-            'layer_name': layer.name(),
-            'layer_id': layer.id(),
-            'layer_source': layer.sourceName(),
-            'layer_extent': layer.extent(),
-            'layer_bbox': [
-                layer.extent().xMinimum(),
-                layer.extent().yMinimum(),
-                layer.extent().xMaximum(),
-                layer.extent().yMaximum()
-            ],
+            'layer': {
+                'layer_obj': layer,
+                'layer_type': get_layer_type(layer.type()),
+                'layer_geometry_type': get_geometry_type(layer.geometryType()),
+                'layer_name': layer.name(),
+                'layer_id': layer.id(),
+                'layer_source': layer.sourceName(),
+                'layer_extent': layer.extent(),
+                'layer_bbox': [
+                    layer.extent().xMinimum(),
+                    layer.extent().yMinimum(),
+                    layer.extent().xMaximum(),
+                    layer.extent().yMaximum()
+                ]
+            }
         }
 
         return env_layer
@@ -363,12 +368,14 @@ class EasyReports:
         env_feature.update(self.mount_layer_dict(layer))
 
         env_feature.update({
-            'feature_obj': feature,
-            'feature_id': feature.id(),
-            'feature_wkt': feature.geometry().asWkt() if layer.isSpatial() else None,
-            'feature_geojson': feature.geometry().asJson() if layer.isSpatial() else None,
-            'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() else None,
-            'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() else None
+            'feature': {
+                'feature_obj': feature,
+                'feature_id': feature.id(),
+                'feature_wkt': feature.geometry().asWkt() if layer.isSpatial() else None,
+                'feature_geojson': feature.geometry().asJson() if layer.isSpatial() else None,
+                'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() else None,
+                'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() else None
+            }
         })
 
         attr_dict = {}
@@ -387,7 +394,7 @@ class EasyReports:
 
                 attr_dict[field.name()] = value
 
-        env_feature.update(attr_dict)
+        env_feature['feature'].update(attr_dict)
 
         for relation in self.pj_relations.values():
             related_features = relation.getRelatedFeatures(feature)
@@ -402,13 +409,13 @@ class EasyReports:
         return env_feature
 
     def mount_layouts_dict(self):
-        self.lytMManager = self.pjInstance.layoutManager()
+        self.lyt_manager = self.pjInstance.layoutManager()
 
         env_layouts = {
             'layouts': dict()
         }
 
-        for lyt in self.lytManager.printLayouts():
+        for lyt in self.lyt_manager.printLayouts():
             env_layouts['layouts'].update({lyt.name(): {'layout_obj': lyt, 'layout_atlas': lyt.atlas()}})
 
         return env_layouts
@@ -508,8 +515,16 @@ class EasyReports:
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(4)
 
+        QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_name', self.outputName)
+
         if self.check_input():
-            self.progressBarStep = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(list(self.pjInstance.mapLayersByName(self.inputLayerName)[0].getFeatures()))
+            # TODO: Parallelize the progress bar
+            # if checkbox is marked...
+            features_iterator = self.input_layer.getSelectedFeatures()
+            # else:
+                # features_iterator = self.input_layer.getFeatures()
+
+            self.progressBarStep = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(list(features_iterator))
             self.progressBar = 0
             self.dlg.qtProgressBar.setValue(self.progressBar)
 
@@ -524,7 +539,7 @@ class EasyReports:
                 self.context.update(self.mount_feature_dict(mainFeature, self.pjInstance.mapLayersByName(self.inputLayerName)[0]))
                 self.context.update(self.mount_layouts_dict())
 
-                json.dumps(self.context, indent = 4)
+                print(json.dumps(self.context, indent = 4, default = str))
 
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
@@ -544,6 +559,7 @@ class EasyReports:
 # QgsJsonExporter
 
 def get_layer_type(layer_type):
+    # TODO: This method must be replaced byu a match-case statement as soon as QGIS 3.34 becomes the LTS
     if layer_type == QgsMapLayerType.VectorLayer:
         type = "vector"
     elif layer_type == QgsMapLayerType.RasterLayer:
@@ -562,6 +578,7 @@ def get_layer_type(layer_type):
     return type
 
 def get_geometry_type(geometry_type):
+    # TODO: This method must be replaced byu a match-case statement as soon as QGIS 3.34 becomes the LTS
     if geometry_type == QgsWkbTypes.PointGeometry:
         type = "point"
     elif geometry_type == QgsWkbTypes.LineGeometry:
@@ -576,3 +593,11 @@ def get_geometry_type(geometry_type):
         type = "unknown"
 
     return type
+
+def beautifier(dictionary, indent = 0):
+    for key, value in dictionary.items():
+        print('\t'*indent + str(key))
+        if isinstance(value, dict):
+            beautifier(value, indent+1)
+        else:
+            print('\t'*(indent+1) + str(value))
