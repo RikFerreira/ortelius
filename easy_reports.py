@@ -307,20 +307,6 @@ class EasyReports:
         self.outputDir = self.dlg.qtQgsOutputDir.filePath()
         self.outputName = self.dlg.qtOutputName.text()
 
-        self.childLayersName = [item.text() for item in self.dlg.qtParentList.selectedItems()]
-        self.parentLayersName = [item.text() for item in self.dlg.qtChildList.selectedItems()]
-        self.unrelatedVectorLayersName = [item.text() for item in self.dlg.qtListUnrelatedVector.selectedItems()]
-        self.unrelatedRasterLayersName = [item.text() for item in self.dlg.qtListUnrelatedRaster.selectedItems()]
-
-        self.pjPrintLayoutsName = [item.text() for item in self.dlg.qtListPrintLayouts.selectedItems()]
-
-        self.echo_log(f'Current input consists of:\n' \
-                      f"Child layers: {len(self.childLayersName)}\n" \
-                      f"Parent layers: {len(self.parentLayersName)}\n" \
-                      f"Unrelated vector layers: {len(self.unrelatedVectorLayersName)}\n" \
-                      f"Unrelated raster layers: {len(self.unrelatedRasterLayersName)}\n" \
-                      f"Print layouts: {len(self.pjPrintLayoutsName)}\n")
-
         return True
 
     def mount_global_dict(self):
