@@ -182,7 +182,6 @@ class EasyReports:
         # will be set False in run()
         self.first_start = True
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -233,8 +232,10 @@ class EasyReports:
 
         self.dlg.qtInputLayer.clear()
         self.dlg.qtInputLayer.addItems(layers_name)
-
         self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().name())
+
+        self.dlg.qtOutputName.clear()
+        self.dlg.qtOutputName.insert(QgsExpressionContextUtils.projectScope(self.pjInstance).variable('tpf_output_name'))
 
         # Setup context dictionary
         self.environment = dict()
