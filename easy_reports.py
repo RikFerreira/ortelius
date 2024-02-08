@@ -216,16 +216,19 @@ class EasyReports:
     def setup_interface(self):
         # TODO: Reset project directory here
         # Project level attributes
-        self.pjInstance = QgsProject.instance()
+        self.pj_instance = QgsProject.instance()
+
+        self.working_dir = QgsExpressionContextUtils.projectScope(self.pj_instance).variable('project_home')
+        os.chdir(self.working_dir)
 
         # Set project variables
-        QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_feature_index', -1)
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', -1)
 
         # Set temporary folder
         self.tempFolder = QgsProcessingUtils.tempFolder()
 
         # List all layers
-        self.pjLayers = [layer for layer in self.pjInstance.mapLayers().values()]
+        self.pjLayers = [layer for layer in self.pj_instance.mapLayers().values()]
         layers_name = [layer.name() for layer in self.pjLayers]
 
         self.dlg.qtTabWidget.setCurrentIndex(0)
@@ -234,12 +237,12 @@ class EasyReports:
         self.dlg.qtInputLayer.addItems(layers_name)
         self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().name())
 
-        self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pjInstance).variable('tpf_template_file'))
+        self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('tpf_template_file'))
 
-        self.dlg.qtQgsOutputDir.setFilePath(QgsExpressionContextUtils.projectScope(self.pjInstance).variable('tpf_output_dir'))
+        self.dlg.qtQgsOutputDir.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('tpf_output_dir'))
 
         self.dlg.qtOutputName.clear()
-        self.dlg.qtOutputName.insert(QgsExpressionContextUtils.projectScope(self.pjInstance).variable('tpf_output_name'))
+        self.dlg.qtOutputName.insert(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('tpf_output_name'))
 
         # Setup context dictionary
         self.environment = dict()
@@ -258,11 +261,11 @@ class EasyReports:
 
     def update_interface(self):
         # Input layer
-        self.input_layer = self.pjInstance.mapLayersByName(self.dlg.qtInputLayer.currentText())[0]
+        self.input_layer = self.pj_instance.mapLayersByName(self.dlg.qtInputLayer.currentText())[0]
 
         self.echo_log(f'Camada mapeada: {self.input_layer}', True)
 
-        self.pj_relations = self.pjInstance.relationManager().relations()
+        self.pj_relations = self.pj_instance.relationManager().relations()
 
     def echo_log(self, message, breakbefore = False):
         if breakbefore:
@@ -388,7 +391,7 @@ class EasyReports:
         return env_feature
 
     def mount_layouts_dict(self):
-        self.lyt_manager = self.pjInstance.layoutManager()
+        self.lyt_manager = self.pj_instance.layoutManager()
 
         env_layouts = {
             'layouts': dict()
@@ -420,7 +423,7 @@ class EasyReports:
 
     # def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
     #     # TODO: This function needs to be splitted in a function for the render and a function for the exporter. It is necessary as there must be an option for display the numeric scale. The current workflow has two subsequent procedures for determine figure width. Solving the former may fix this flaw
-    #     self.lytManager = self.pjInstance.layoutManager()
+    #     self.lytManager = self.pj_instance.layoutManager()
 
     #     printLayoutName = layoutParams[0]
     #     feature = layoutParams[1]
@@ -495,9 +498,9 @@ class EasyReports:
         self.dlg.qtTabWidget.setCurrentIndex(4)
 
         if self.check_input():
-            QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_template_file', self.inputTemplateFile)
-            QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_dir', self.outputDir)
-            QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_output_name', self.outputName)
+            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_template_file', self.inputTemplateFile)
+            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_dir', self.outputDir)
+            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_name', self.outputName)
 
             if self.dlg.qtSelectedFeaturesOnly.isChecked():
                 features_iterator = list(self.input_layer.getSelectedFeatures())
@@ -514,12 +517,12 @@ class EasyReports:
             i = 1
             for mainFeature in features_iterator:
                 # TODO: Figure out why this loop runs 3 times
-                QgsExpressionContextUtils.setProjectVariable(self.pjInstance, 'tpf_feature_index', mainFeature.id())
+                QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', mainFeature.id())
 
                 self.context = dict()
 
                 self.context.update(self.mount_global_dict())
-                self.context.update(self.mount_feature_dict(mainFeature, self.pjInstance.mapLayersByName(self.inputLayerName)[0]))
+                self.context.update(self.mount_feature_dict(mainFeature, self.pj_instance.mapLayersByName(self.inputLayerName)[0]))
                 self.context.update(self.mount_layouts_dict())
 
                 # print(json.dumps(self.context, indent = 4, default = str))
