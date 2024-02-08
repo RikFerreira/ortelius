@@ -225,7 +225,7 @@ class EasyReports:
         QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', -1)
 
         # Set temporary folder
-        self.tempFolder = QgsProcessingUtils.tempFolder()
+        self.temp_dir = QgsProcessingUtils.tempFolder()
 
         # List all layers
         self.pjLayers = [layer for layer in self.pj_instance.mapLayers().values()]
@@ -353,10 +353,10 @@ class EasyReports:
             'feature': {
                 'feature_obj': feature,
                 'feature_id': feature.id(),
-                'feature_wkt': feature.geometry().asWkt() if layer.isSpatial() else None,
-                'feature_geojson': feature.geometry().asJson() if layer.isSpatial() else None,
-                'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() else None,
-                'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() else None
+                'feature_wkt': feature.geometry().asWkt() if layer.isSpatial() and not feature.geometry().isNull() else None,
+                'feature_geojson': feature.geometry().asJson() if layer.isSpatial() and not feature.geometry().isNull() else None,
+                'feature_extent': feature.geometry().boundingBox() if layer.isSpatial() and not feature.geometry().isNull() else None,
+                'feature_centroid': feature.geometry().centroid().asPoint() if layer.isSpatial() and not feature.geometry().isNull() else None
             }
         })
 
@@ -412,7 +412,7 @@ class EasyReports:
             layout_dict['layout_atlas'].refreshCurrentFeature()
 
         if not output_dir:
-            output_dir = self.tempFolder
+            output_dir = self.temp_dir
 
         output_file = os.path.join(output_dir, self.outputName.format(**self.context['feature']) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
 
@@ -442,7 +442,7 @@ class EasyReports:
     #     height = width / aspectRatio
 
     #     if outputFolder is None:
-    #         outputFolder = self.tempFolder
+    #         outputFolder = self.temp_dir
     #     # outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
     #     outputFile = os.path.join(outputFolder, self.outputName.format(**self.context) + '_' + printLayoutName + '.' + 'png')
 
@@ -482,11 +482,16 @@ class EasyReports:
 
         return InlineImage(self.inputTemplate, path, width = image_width, height = image_height)
 
-    def exportPictureFromBase64(self, base64string, filename):
-        with open(filename, 'wb') as fout:
+    def exportPictureFromBase64(self, base64string, filename, output_dir = None):
+        if output_dir is None:
+            output_dir = self.temp_dir
+
+        output_file = os.path.join(output_dir, filename)
+
+        with open(output_file, 'wb') as fout:
             fout.write(base64.decodebytes(base64string))
 
-        return filename
+        return output_file
 
     def xForMatch(self, value, compare):
         return "X" if value == compare else ""
@@ -525,7 +530,7 @@ class EasyReports:
                 self.context.update(self.mount_feature_dict(mainFeature, self.pj_instance.mapLayersByName(self.inputLayerName)[0]))
                 self.context.update(self.mount_layouts_dict())
 
-                # print(json.dumps(self.context, indent = 4, default = str))
+                print(json.dumps(self.context, indent = 4, default = str))
 
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
