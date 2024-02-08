@@ -530,7 +530,7 @@ class EasyReports:
                 self.context.update(self.mount_feature_dict(mainFeature, self.pj_instance.mapLayersByName(self.inputLayerName)[0]))
                 self.context.update(self.mount_layouts_dict())
 
-                print(json.dumps(self.context, indent = 4, default = str))
+                # print(json.dumps(self.context, indent = 4, default = str))
 
                 self.inputTemplate.reset_replacements()
                 self.inputTemplate.render(self.context, self.jinja_env)
