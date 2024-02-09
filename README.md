@@ -60,6 +60,7 @@ Each document has a complex dictionary with attributes extracted from the relati
 #### Sample context dictionary
 
 ```
+{
     "global": {
     },
     "layer": {
@@ -69,17 +70,21 @@ Each document has a complex dictionary with attributes extracted from the relati
     "IntLin": [
         {
             "layer": {...},
-            "feature": {...}
+            "feature": {...},
+            "IntLin__ATTACH": [
+                {...},
+                ...
+            ]
         },
         {},
         {}
     ],
-    "IntPoli": [...]
-    "IntPto": [...]
-    "LocAre": [...]
-    "LocVer": [...]
-    "Nascente": [...]
-    "URUCUIA_PIALBE_V2__ATTACH": [...]
+    "IntPoli": [...],
+    "IntPto": [...],
+    "LocAre": [...],
+    "LocVer": [...],
+    "Nascente": [...],
+    "URUCUIA_PIALBE_V2__ATTACH": [...],
     "layouts": {
         "QgsMapaLocCad": {
             "layout_obj": "<qgis._core.QgsPrintLayout object at 0x000001566C6EB4C0>",
@@ -87,6 +92,7 @@ Each document has a complex dictionary with attributes extracted from the relati
         },
         ...
     }
+}
 ```
 
 ### Filters
