@@ -59,6 +59,36 @@ Each document has a complex dictionary with attributes extracted from the relati
 
 #### Sample context dictionary
 
+```
+    "global": {
+    },
+    "layer": {
+    },
+    "feature": {
+    },
+    "IntLin": [
+        {
+            "layer": {...},
+            "feature": {...}
+        },
+        {},
+        {}
+    ],
+    "IntPoli": [...]
+    "IntPto": [...]
+    "LocAre": [...]
+    "LocVer": [...]
+    "Nascente": [...]
+    "URUCUIA_PIALBE_V2__ATTACH": [...]
+    "layouts": {
+        "QgsMapaLocCad": {
+            "layout_obj": "<qgis._core.QgsPrintLayout object at 0x000001566C6EB4C0>",
+            "layout_atlas": "<qgis._core.QgsLayoutAtlas object at 0x000001566FE7B430>"
+        },
+        ...
+    }
+```
+
 ### Filters
 
 Filters are custom functions designed to extend the capabilities of the DOCX reports. Here is a list of the custom filters implemented by this plugin:
