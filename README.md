@@ -4,6 +4,19 @@
 
 ## Installation
 
+### Dependencies
+
+These dependencies must be installed manually in OSGeo4W Shell:
+
+- docxtpl==0.16.7
+- jinja2==2.11.2
+- docx==0.2.4
+- qrcode==7.4.2
+
+```
+pip install docxtpl jinja2 docx qrcode
+```
+
 ## Basic usage
 
 ## Getting help
