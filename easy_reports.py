@@ -379,8 +379,11 @@ class EasyReports:
         env_feature['feature'].update(attr_dict)
 
         for relation in self.pj_relations.values():
-            related_features = relation.getRelatedFeatures(feature)
+            related_features = list(relation.getRelatedFeatures(feature))
             related_layer = relation.referencingLayer()
+
+            if len(related_features) == 0:
+                continue
 
             relation_list = list()
             for rel_feat in related_features:
@@ -420,37 +423,6 @@ class EasyReports:
         exporter.exportToImage(output_file, QgsLayoutExporter.ImageExportSettings())
 
         return output_file
-
-    # def exportPrintLayout(self, layoutParams, figWidth = 1.0, isAtlas = True, outputFolder = None, driver = 'png'):
-    #     # TODO: This function needs to be splitted in a function for the render and a function for the exporter. It is necessary as there must be an option for display the numeric scale. The current workflow has two subsequent procedures for determine figure width. Solving the former may fix this flaw
-    #     self.lytManager = self.pj_instance.layoutManager()
-
-    #     printLayoutName = layoutParams[0]
-    #     feature = layoutParams[1]
-
-    #     layout = self.lytManager.layoutByName(layoutParams[0])
-
-    #     if isAtlas:
-    #         layout.atlas().beginRender()
-    #         layout.atlas().seekTo(feature)
-    #         layout.atlas().refreshCurrentFeature()
-
-    #     layoutPageSize = layout.pageCollection().page(0).pageSize()
-    #     aspectRatio = layoutPageSize.width() / layoutPageSize.height()
-
-    #     width = Mm(tpl_get_page_width(self.inputTemplate)) * figWidth
-    #     height = width / aspectRatio
-
-    #     if outputFolder is None:
-    #         outputFolder = self.temp_dir
-    #     # outputFile = os.path.join(outputFolder, str(feature.id()) + '_' + printLayoutName + '.' + 'png')
-    #     outputFile = os.path.join(outputFolder, self.outputName.format(**self.context) + '_' + printLayoutName + '.' + 'png')
-
-    #     # layout.pageCollection().page(0).setPageSize(QgsLayoutSize(width, height))
-    #     exporter = QgsLayoutExporter(layout)
-    #     exporter.exportToImage(outputFile, QgsLayoutExporter.ImageExportSettings())
-
-    #     return outputFile
 
     # # # # # # # # # # # # # # # #
     # Custom filters              #
