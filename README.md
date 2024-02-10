@@ -39,14 +39,27 @@ Each document has a complex dictionary with attributes extracted from the relati
 
 - Context
   - `global`
+    - `project_obj`: A `QgsProject` object
+    - `mapCanvas`: A `QgsMapCanvas` object
+    - `project_bbox`: A list of 4 elements: xmin, ymin, xmax, ymax referring to the boundary of the project
+    - `global_vars`: QGIS global variables
+    - `project_vars`: QGIS project vairables
   - `layer`
+    - `layer_obj`: `QgsVectorLayer` object
+    - `layer_type`: The layer type
+    - `layer_geometry_type`: The layer geometry type
+    - `layer_name`: The layer name
+    - `layer_id`: The layer unique ID
+    - `layer_source`: The name of the source
+    - `layer_extent`: A `QgsRectangle` object of the extent of the layer
+    - `layer_bbox`: A list of 4 elements: xmin, ymin, xmax, ymax referring to the boundary of the layer
   - `feature`
-    - `feature_obj`: QgsFeature object
+    - `feature_obj`: `QgsFeature` object
     - `feature_id`: Feature ID (equivalent of `$id` in QGIS expression)
     - `feature_wkt`: Feature geometry as a well-known text string
     - `feature_geojson`: Feature geometry as GeoJSON string
-    - `feature_extent`: QgsRectangle of the feature extent
-    - `feature_centroid`: QgsPointXY object of the feature centroid
+    - `feature_extent`: `QgsRectangle` of the feature extent
+    - `feature_centroid`: `QgsPointXY` object of the feature centroid
     - All the attributes of the feature are called by their name, not their alias
   - `related layer name`
     - `layer`
@@ -54,8 +67,8 @@ Each document has a complex dictionary with attributes extracted from the relati
     - `related layer name and so on...`
   - `layouts`
     - `layout name`
-      - `layout_obj`: QgsPrintLayout object
-      - `layout_atlas`: QgsLayoutAtlas object
+      - `layout_obj`: `QgsPrintLayout` object
+      - `layout_atlas`: `QgsLayoutAtlas` object
 
 #### Sample context dictionary
 
