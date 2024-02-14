@@ -276,16 +276,13 @@ class EasyReports:
 
     def check_input(self):
         if not os.path.isfile(self.dlg.qtQgsInputTemplate.filePath()):
-            self.echo_log('ERROR: No template specified!')
-            return False
+            raise Exception('ERROR: No template specified!')
 
         if not os.path.isdir(self.dlg.qtQgsOutputDir.filePath()):
-            self.echo_log('ERROR: No output directory specified!')
-            return False
+            raise Exception('ERROR: No output directory specified!')
 
         if not self.dlg.qtOutputName.text():
-            self.echo_log('ERROR: No output name specified!')
-            return False
+            raise Exception('ERROR: No output name specified!')
 
         self.output_formats = dict()
         self.output_formats['docx'] = self.dlg.qtOutputDocx.checkState()
@@ -294,8 +291,7 @@ class EasyReports:
         self.output_formats['html'] = self.dlg.qtOutputHtml.checkState()
 
         if not reduce(lambda a, b: a or b, list(self.output_formats.values())):
-            self.echo_log('ERROR: No output format specified!')
-            return False
+            raise Exception('ERROR: No output format specified!')
 
         self.input_layer_name = self.dlg.qtInputLayer.currentText()
         self.input_templateFile = self.dlg.qtQgsInputTemplate.filePath()
@@ -479,6 +475,7 @@ class EasyReports:
         return "X" if value == compare else ""
 
     def multipleCheckBoxes(self, value, domain):
+
         return -1
 
     def run_export(self):
