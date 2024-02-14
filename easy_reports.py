@@ -287,21 +287,25 @@ class EasyReports:
             self.echo_log('ERROR: No output name specified!')
             return False
 
-        self.outputFormats = dict()
-        self.outputFormats['docx'] = self.dlg.qtOutputDocx.checkState()
-        self.outputFormats['pdf'] = self.dlg.qtOutputPdf.checkState()
-        self.outputFormats['odt'] = self.dlg.qtOutputOdt.checkState()
-        self.outputFormats['html'] = self.dlg.qtOutputHtml.checkState()
+        self.output_formats = dict()
+        self.output_formats['docx'] = self.dlg.qtOutputDocx.checkState()
+        self.output_formats['pdf'] = self.dlg.qtOutputPdf.checkState()
+        self.output_formats['odt'] = self.dlg.qtOutputOdt.checkState()
+        self.output_formats['html'] = self.dlg.qtOutputHtml.checkState()
 
-        if not reduce(lambda a, b: a or b, list(self.outputFormats.values())):
+        if not reduce(lambda a, b: a or b, list(self.output_formats.values())):
             self.echo_log('ERROR: No output format specified!')
             return False
 
-        self.inputLayerName = self.dlg.qtInputLayer.currentText()
-        self.inputTemplateFile = self.dlg.qtQgsInputTemplate.filePath()
-        self.inputTemplate = DocxTemplate(self.inputTemplateFile)
-        self.outputDir = self.dlg.qtQgsOutputDir.filePath()
-        self.outputName = self.dlg.qtOutputName.text()
+        self.input_layer_name = self.dlg.qtInputLayer.currentText()
+        self.input_templateFile = self.dlg.qtQgsInputTemplate.filePath()
+        self.input_template = DocxTemplate(self.input_templateFile)
+        self.output_dir = self.dlg.qtQgsOutputDir.filePath()
+        self.output_name = self.dlg.qtOutputName.text()
+
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_template_file', self.input_templateFile)
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_dir', self.output_dir)
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_name', self.output_name)
 
         return True
 
@@ -405,6 +409,12 @@ class EasyReports:
 
         return env_layouts
 
+    # def mount_processing_dict(self):
+
+    # def mount_field_calculator_dict(self):
+
+    # TODO: Image edition using imagemagick
+
     def render_docx(self):
         pass
 
@@ -417,7 +427,7 @@ class EasyReports:
         if not output_dir:
             output_dir = self.temp_dir
 
-        output_file = os.path.join(output_dir, self.outputName.format(**self.context['feature']) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
+        output_file = os.path.join(output_dir, self.output_name.format(**self.context['feature']) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
 
         exporter = QgsLayoutExporter(layout_dict['layout_obj'])
         exporter.exportToImage(output_file, QgsLayoutExporter.ImageExportSettings())
@@ -439,7 +449,7 @@ class EasyReports:
     def renderPictureFromPath(self, path, width = None, height = None):
         # TODO: This method does not work well with portrait images. The method rotates the image before render.
 
-        section = self.inputTemplate.get_docx().sections[0]
+        section = self.input_template.get_docx().sections[0]
         section_width = (section.page_width - (section.left_margin + section.right_margin)) * 1.0 / 36000
 
         if width <= 1:
@@ -452,7 +462,7 @@ class EasyReports:
         else:
             image_height = height
 
-        return InlineImage(self.inputTemplate, path, width = image_width, height = image_height)
+        return InlineImage(self.input_template, path, width = image_width, height = image_height)
 
     def exportPictureFromBase64(self, base64string, filename, output_dir = None):
         if output_dir is None:
@@ -472,13 +482,9 @@ class EasyReports:
         return -1
 
     def run_export(self):
-        self.dlg.qtTabWidget.setCurrentIndex(4)
+        self.dlg.qtTabWidget.setCurrentIndex(2)
 
         if self.check_input():
-            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_template_file', self.inputTemplateFile)
-            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_dir', self.outputDir)
-            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_name', self.outputName)
-
             if self.dlg.qtSelectedFeaturesOnly.isChecked():
                 features_iterator = list(self.input_layer.getSelectedFeatures())
             else:
@@ -493,20 +499,20 @@ class EasyReports:
 
             i = 1
             for mainFeature in features_iterator:
-                # TODO: Figure out why this loop runs 3 times
+                # \: Figure out why this loop runs 3 times
                 QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', mainFeature.id())
 
                 self.context = dict()
 
                 self.context.update(self.mount_global_dict())
-                self.context.update(self.mount_feature_dict(mainFeature, self.pj_instance.mapLayersByName(self.inputLayerName)[0]))
+                self.context.update(self.mount_feature_dict(mainFeature, self.pj_instance.mapLayersByName(self.input_layer_name)[0]))
                 self.context.update(self.mount_layouts_dict())
 
                 # print(json.dumps(self.context, indent = 4, default = str))
 
-                self.inputTemplate.reset_replacements()
-                self.inputTemplate.render(self.context, self.jinja_env)
-                self.inputTemplate.save(os.path.join(self.outputDir, self.outputName.format(**self.context['feature'])))
+                self.input_template.reset_replacements()
+                self.input_template.render(self.context, self.jinja_env)
+                self.input_template.save(os.path.join(self.output_dir, self.output_name.format(**self.context['feature']) + '.docx'))
 
                 self.progressBar += self.progressBarStep
                 self.dlg.qtProgressBar.setValue(self.progressBar)
@@ -556,11 +562,3 @@ def get_geometry_type(geometry_type):
         type = "unknown"
 
     return type
-
-def beautifier(dictionary, indent = 0):
-    for key, value in dictionary.items():
-        print('\t'*indent + str(key))
-        if isinstance(value, dict):
-            beautifier(value, indent+1)
-        else:
-            print('\t'*(indent+1) + str(value))
