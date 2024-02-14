@@ -499,6 +499,8 @@ class EasyReports:
 
         try:
             self.check_input()
+        except ValueError as e:
+            iface.messageBar().pushMessage('TPF Easy Reports', f'ValueError: {e}', level = Qgis.Critical)
         else:
             # TODO: Parallelize the progress bar
             self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(self.features_iterator)
@@ -526,6 +528,8 @@ class EasyReports:
                 self.dlg.qtProgressBar.setValue(self.progress_bar_value)
 
             self.dlg.qtProgressBar.setValue(self.dlg.qtProgressBar.maximum())
+
+            iface.messageBar().pushMessage('TPF Easy Reports', f'All {len(self.features_iterator)} features exported!',level=Qgis.Info)
 
 
 
