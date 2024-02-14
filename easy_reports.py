@@ -42,6 +42,7 @@ from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
 import jinja2
 import json
+import io
 import base64
 # import qrcode
 
@@ -255,7 +256,7 @@ class EasyReports:
         self.jinja_env.filters['exportPictureFromBase64'] = self.exportPictureFromBase64
         self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
         # self.jinja_env.filters['renderPictureFromBase64'] = self.renderPictureFromBase64
-        # self.jinja_env.filters['multipleCheckBoxes'] = self.multipleCheckBoxes
+        self.jinja_env.filters['multiple_check_boxes'] = self.multiple_check_boxes
 
         self.update_interface()
 
@@ -474,12 +475,18 @@ class EasyReports:
     def xForMatch(self, value, compare):
         return "X" if value == compare else ""
 
-    def multipleCheckBoxes(self, value, domain):
+    def multiple_check_boxes(self, value, domain):
+        print_dict = {a: '☑' if b else '☐' for a, b in zip(domain, [x == value for x in domain])}
 
-        return -1
+        string_buff = io.StringIO()
+
+        for key, value in print_dict.items():
+            string_buff.write(f'{value}\t{key}\n')
+
+        return string_buff.getvalue()
 
     def run_export(self):
-        self.dlg.qtTabWidget.setCurrentIndex(2)
+        self.dlg.qtTabWidget.setCurrentIndex(1)
 
         if self.check_input():
             if self.dlg.qtSelectedFeaturesOnly.isChecked():
@@ -487,16 +494,16 @@ class EasyReports:
             else:
                 features_iterator = list(self.input_layer.getFeatures())
 
+            if len(features_iterator) == 0:
+                raise ZeroDivisionError('No feature selected!')
+
             # TODO: Parallelize the progress bar
-            self.progressBarStep = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(features_iterator)
-            self.progressBar = 0
-            self.dlg.qtProgressBar.setValue(self.progressBar)
+            self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(features_iterator)
+            self.progress_bar_value = 0
+            self.dlg.qtProgressBar.setValue(self.progress_bar_value)
 
-            print(features_iterator)
-
-            i = 1
             for mainFeature in features_iterator:
-                # \: Figure out why this loop runs 3 times
+                # TODO: Figure out why this loop runs 3 times
                 QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', mainFeature.id())
 
                 self.context = dict()
@@ -511,10 +518,8 @@ class EasyReports:
                 self.input_template.render(self.context, self.jinja_env)
                 self.input_template.save(os.path.join(self.output_dir, self.output_name.format(**self.context['feature']) + '.docx'))
 
-                self.progressBar += self.progressBarStep
-                self.dlg.qtProgressBar.setValue(self.progressBar)
-
-                i += 1
+                self.progress_bar_value += self.progress_bar_step
+                self.dlg.qtProgressBar.setValue(self.progress_bar_value)
 
             self.dlg.qtProgressBar.setValue(self.dlg.qtProgressBar.maximum())
 
