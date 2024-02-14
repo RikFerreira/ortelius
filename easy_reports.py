@@ -415,9 +415,15 @@ class EasyReports:
 
         return env_layouts
 
-    # def mount_processing_dict(self):
+    # TODO: def mount_processing_dict(self):
 
-    # def mount_field_calculator_dict(self):
+    def run_expression(self, expr_string):
+        expression = QgsExpression(expr_string)
+
+        if not expression.isValid():
+            raise ValueError('Expression not valid!')
+
+        return expression.evaluate()
 
     # TODO: Image edition using imagemagick
 
@@ -444,7 +450,7 @@ class EasyReports:
     # Custom filters              #
     # # # # # # # # # # # # # # # #
 
-    # def exportQrCode(self, feature):
+    # TODO: def exportQrCode(self, feature):
         # This is the logic of the method
         # Transform feature to WGS 84 (EPSG: 4326)
         # Extract centroid coordinates (multipart are a single feature)
@@ -530,12 +536,6 @@ class EasyReports:
             self.dlg.qtProgressBar.setValue(self.dlg.qtProgressBar.maximum())
 
             iface.messageBar().pushMessage('TPF Easy Reports', f'All {len(self.features_iterator)} features exported!',level=Qgis.Info)
-
-
-
-# Geopackage types (typeNames) supported by QGIS: ['Integer64', 'String', 'Integer', 'Real', 'Boolean', 'Date', 'String', 'DateTime', 'Binary', 'JSON', 'JSON', 'JSON', 'JSON']
-# attributeMap | Qt Data Types
-# QgsJsonExporter
 
 def get_layer_type(layer_type):
     # TODO: This method must be replaced byu a match-case statement as soon as QGIS 3.34 becomes the LTS
