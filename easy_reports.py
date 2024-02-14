@@ -300,6 +300,14 @@ class EasyReports:
         self.output_dir = self.dlg.qtQgsOutputDir.filePath()
         self.output_name = self.dlg.qtOutputName.text()
 
+        if self.dlg.qtSelectedFeaturesOnly.isChecked():
+            self.features_iterator = list(self.input_layer.getSelectedFeatures())
+        else:
+            self.features_iterator = list(self.input_layer.getFeatures())
+
+        if len(self.features_iterator) == 0:
+            raise ValueError('No feature selected!')
+
         QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_template_file', self.input_templateFile)
         QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_dir', self.output_dir)
         QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_name', self.output_name)
@@ -492,20 +500,13 @@ class EasyReports:
         try:
             self.check_input()
         else:
-            if self.dlg.qtSelectedFeaturesOnly.isChecked():
-                features_iterator = list(self.input_layer.getSelectedFeatures())
-            else:
-                features_iterator = list(self.input_layer.getFeatures())
-
-            if len(features_iterator) == 0:
-                raise ZeroDivisionError('No feature selected!')
-
             # TODO: Parallelize the progress bar
-            self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(features_iterator)
+            self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(self.features_iterator)
             self.progress_bar_value = 0
             self.dlg.qtProgressBar.setValue(self.progress_bar_value)
 
             for mainFeature in features_iterator:
+                # TODO: This logic must be in the method render_docx
                 # TODO: Figure out why this loop runs 3 times
                 QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', mainFeature.id())
 
