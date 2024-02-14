@@ -277,13 +277,13 @@ class EasyReports:
 
     def check_input(self):
         if not os.path.isfile(self.dlg.qtQgsInputTemplate.filePath()):
-            raise Exception('ERROR: No template specified!')
+            raise FileNotFoundError('No template specified!')
 
         if not os.path.isdir(self.dlg.qtQgsOutputDir.filePath()):
-            raise Exception('ERROR: No output directory specified!')
+            raise NotADirectoryError('No output directory specified!')
 
         if not self.dlg.qtOutputName.text():
-            raise Exception('ERROR: No output name specified!')
+            raise ValueError('No output name specified!')
 
         self.output_formats = dict()
         self.output_formats['docx'] = self.dlg.qtOutputDocx.checkState()
@@ -292,7 +292,7 @@ class EasyReports:
         self.output_formats['html'] = self.dlg.qtOutputHtml.checkState()
 
         if not reduce(lambda a, b: a or b, list(self.output_formats.values())):
-            raise Exception('ERROR: No output format specified!')
+            raise ValueError('No output format specified!')
 
         self.input_layer_name = self.dlg.qtInputLayer.currentText()
         self.input_templateFile = self.dlg.qtQgsInputTemplate.filePath()
@@ -361,6 +361,7 @@ class EasyReports:
             }
         })
 
+        # TODO: Figure out a way to the user to choose if the value is the real or the alias
         attr_dict = {}
         if layer.type() == QgsMapLayerType.VectorLayer:
             for field in layer.fields().toList():
@@ -488,7 +489,9 @@ class EasyReports:
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(1)
 
-        if self.check_input():
+        try:
+            self.check_input()
+        else:
             if self.dlg.qtSelectedFeaturesOnly.isChecked():
                 features_iterator = list(self.input_layer.getSelectedFeatures())
             else:
