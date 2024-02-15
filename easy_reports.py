@@ -33,6 +33,7 @@ from PyQt5.QtCore import QDateTime, QDate, QTime, QByteArray
 from .resources import *
 # Import the code for the dialog
 from .easy_reports_dialog import EasyReportsDialog
+# from .tasks.render_document import RenderDoc
 import os.path
 
 import time
