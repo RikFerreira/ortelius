@@ -301,11 +301,11 @@ class EasyReports:
         self.output_name = self.dlg.qtOutputName.text()
 
         if self.dlg.qtSelectedFeaturesOnly.isChecked():
-            self.features_iterator = list(self.input_layer.getSelectedFeatures())
+            self.features_iterable = list(self.input_layer.getSelectedFeatures())
         else:
-            self.features_iterator = list(self.input_layer.getFeatures())
+            self.features_iterable = list(self.input_layer.getFeatures())
 
-        if len(self.features_iterator) == 0:
+        if len(self.features_iterable) == 0:
             raise ValueError('No feature selected!')
 
         QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_template_file', self.input_templateFile)
@@ -427,8 +427,6 @@ class EasyReports:
 
     # TODO: Image edition using imagemagick
 
-    def render_docx(self):
-        pass
 
     def exportPrintLayout(self, layout_dict, feature_dict, output_dir = None):
         if layout_dict['layout_atlas'].enabled():
@@ -439,7 +437,7 @@ class EasyReports:
         if not output_dir:
             output_dir = self.temp_dir
 
-        output_file = os.path.join(output_dir, self.output_name.format(**self.context['feature']) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
+        output_file = os.path.join(output_dir, self.output_name.format(**self.filename_var_space) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
 
         exporter = QgsLayoutExporter(layout_dict['layout_obj'])
         exporter.exportToImage(output_file, QgsLayoutExporter.ImageExportSettings())
@@ -500,6 +498,35 @@ class EasyReports:
 
         return string_buff.getvalue()
 
+    def render_docx(self):
+        for main_feature in self.features_iterable:
+            # TODO: Figure out why this loop runs 3 times
+            # TODO: The creation of the dictionary and the docx export must be inside a QgsTask class. The plugin responsivity relies on this!!!
+            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', main_feature.id())
+
+            context = dict()
+
+            context.update(self.mount_global_dict())
+            context.update(self.mount_feature_dict(main_feature, self.pj_instance.mapLayersByName(self.input_layer_name)[0]))
+            context.update(self.mount_layouts_dict())
+
+            self.filename_var_space = context['feature']
+
+            # print(json.dumps(self.context, indent = 4, default = str))
+
+            self.input_template.reset_replacements()
+            self.input_template.render(context, self.jinja_env)
+            self.input_template.save(os.path.join(self.output_dir, self.output_name.format(**self.filename_var_space) + '.docx'))
+
+            self.progress_bar_value += self.progress_bar_step
+            self.dlg.qtProgressBar.setValue(self.progress_bar_value)
+
+        self.dlg.qtProgressBar.setValue(self.dlg.qtProgressBar.maximum())
+
+        iface.messageBar().pushMessage('TPF Easy Reports', f'All {len(self.features_iterable)} features exported!',level=Qgis.Info)
+
+        pass
+
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(1)
 
@@ -509,33 +536,16 @@ class EasyReports:
             iface.messageBar().pushMessage('TPF Easy Reports', f'ValueError: {e}', level = Qgis.Critical)
         else:
             # TODO: Parallelize the progress bar
-            self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(self.features_iterator)
+            self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(self.features_iterable)
             self.progress_bar_value = 0
             self.dlg.qtProgressBar.setValue(self.progress_bar_value)
 
-            for mainFeature in features_iterator:
-                # TODO: This logic must be in the method render_docx
-                # TODO: Figure out why this loop runs 3 times
-                QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', mainFeature.id())
+            self.render_docx()
 
-                self.context = dict()
-
-                self.context.update(self.mount_global_dict())
-                self.context.update(self.mount_feature_dict(mainFeature, self.pj_instance.mapLayersByName(self.input_layer_name)[0]))
-                self.context.update(self.mount_layouts_dict())
-
-                # print(json.dumps(self.context, indent = 4, default = str))
-
-                self.input_template.reset_replacements()
-                self.input_template.render(self.context, self.jinja_env)
-                self.input_template.save(os.path.join(self.output_dir, self.output_name.format(**self.context['feature']) + '.docx'))
-
-                self.progress_bar_value += self.progress_bar_step
-                self.dlg.qtProgressBar.setValue(self.progress_bar_value)
-
-            self.dlg.qtProgressBar.setValue(self.dlg.qtProgressBar.maximum())
-
-            iface.messageBar().pushMessage('TPF Easy Reports', f'All {len(self.features_iterator)} features exported!',level=Qgis.Info)
+            # tsk_render_docx = QgsTask.fromFunction('render_docx', self.render_docx)
+            # # self.tsk_mgr = QgsTaskManager()
+            # # self.tsk_mgr.addTask(tsk_render_docx)
+            # QgsApplication.taskManager().addTask(tsk_render_docx)
 
 def get_layer_type(layer_type):
     # TODO: This method must be replaced byu a match-case statement as soon as QGIS 3.34 becomes the LTS
