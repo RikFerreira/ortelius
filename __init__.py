@@ -8,7 +8,7 @@
                              -------------------
         begin                : 2023-08-29
         copyright            : (C) 2023 by Rik Ferreira Alves
-        email                : rik.alves@tpfe.com.br
+        email                : rikferreiraalves@gmail.com
         git sha              : $Format:%H$
  ***************************************************************************/
 

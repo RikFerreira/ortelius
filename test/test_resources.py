@@ -8,7 +8,7 @@
 
 """
 
-__author__ = 'rik.alves@tpfe.com.br'
+__author__ = 'rikferreiraalves@gmail.com'
 __date__ = '2023-08-29'
 __copyright__ = 'Copyright 2023, Rik Ferreira Alves'
 

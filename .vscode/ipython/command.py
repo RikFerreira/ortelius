@@ -8,8 +8,8 @@
                               -------------------
         begin                : 2023-08-29
         git sha              : $Format:%H$
-        copyright            : (C) 2023 by TPF Engenharia
-        email                : rik.alves@tpfe.com.br
+        copyright            : (C) 2023 by Rik Ferreira Alves
+        email                : rikferreiraalves@gmail.com
  ***************************************************************************/
 /***************************************************************************
  *                                                                         *
@@ -59,7 +59,7 @@ class EasyReports:
             QCoreApplication.installTranslator(self.translator)
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&TPF Easy Reports')
+        self.menu = self.tr(u'&Ortelius')
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
@@ -135,7 +135,7 @@ class EasyReports:
         icon_path = ':/plugins/easy_reports/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'TPF Easy Reports'),
+            text=self.tr(u'Ortelius'),
             callback=self.run,
             parent=self.iface.mainWindow())
         # will be set False in run()
@@ -144,7 +144,7 @@ class EasyReports:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&TPF Easy Reports'),
+                self.tr(u'&Ortelius'),
                 action)
             self.iface.removeToolBarIcon(action)
     def run(self):

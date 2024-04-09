@@ -1,4 +1,4 @@
-# TPF Easy Reports
+# Ortelius
 
 ## Showcase
 
@@ -22,7 +22,7 @@ pip install docxtpl jinja2 docx qrcode
 ## Getting help
 
 - Rik Ferreira Alves
-  - rik.alves@tpfe.com.br
+  - rikferreiraalves@gmail.com
 
 ## Documentation
 
