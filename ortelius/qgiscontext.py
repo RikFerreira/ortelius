@@ -7,16 +7,17 @@ from qgis.utils import iface
 import json
 import datetime
 
-class Context:
+class QgisContext:
     def __init__(self, iface, project):
         self.iface = iface
         self.project_instance = project
 
         self.relations = self.project_instance.relationManager().relations()
 
-        self.context = dict()
+        self.__context = dict()
 
         self.__tree_root_layer = ''
+        self.__tree_root_index_feature = ''
         self.__tree_depth = 0
         self.__tree_layers = 0
         self.__tree_features = 0
@@ -24,7 +25,14 @@ class Context:
         pass
 
     def __repr__(self) -> str:
-        return f'Root layer: {self.__tree_root_layer}\nDepth of the tree: {self.__tree_depth}\nLayers in the tree: {self.__tree_layers}\nFeatures in the tree: {self.__tree_features}\n'
+        return (
+            'Qgis context dictionary for jinja2 rendering.\n'
+            f'Root layer: {self.__tree_root_layer}\n'
+            f'Root feature index: {self.__tree_root_index_feature}\n'
+            f'Depth of the tree: {self.__tree_depth}\n'
+            f'Layers in the tree: {self.__tree_layers}\n'
+            f'Features in the tree: {self.__tree_features}\n'
+        )
 
     def __mount_global_dict(self) -> dict:
         env_global = {
@@ -147,33 +155,49 @@ class Context:
 
     def mount(self, layer, feature) -> None:
         self.__tree_root_layer = layer.name()
+        self.__tree_root_index_feature = str(feature.id())
         self.__tree_depth = 0
+        self.__tree_layers = 0
+        self.__tree_features = 0
 
-        self.context = dict()
+        self.__context = dict()
 
-        self.context.update(self.__mount_global_dict())
-        self.context.update(self.__mount_feature_dict(layer, feature))
-        self.context.update(self.__mount_layouts_dict())
+        self.__context.update(self.__mount_global_dict())
+        self.__context.update(self.__mount_feature_dict(layer, feature))
+        self.__context.update(self.__mount_layouts_dict())
 
-        # self.__set_tree_depth()
+        self.__set_tree_stats(self.__context)
 
-    def __set_tree_depth(self, ctx = self.context, count = 0) -> None:
+    def __set_tree_stats(self, ctx, count = 0) -> None:
         if count == 0:
-            self.__iter_context = iter(self.context)
+            count += 1
 
-        if ctx:
-            self.__tree_depth = count + 1
-            if ctx['relations']:
-                self.__set_tree_depth(ctx['relations'], self.__tree_depth)
+            for key in ctx['relations'].keys():
+                self.__set_tree_stats(ctx['relations'][key], count)
 
-    def get_tree_depth(self) -> int:
+            self.__tree_features += 1
+        else:
+            count += 1
+
+            for item in ctx:
+                for key in item['relations'].keys():
+                    self.__set_tree_stats(item['relations'][key], count)
+
+            self.__tree_features += len(ctx)
+
+        if self.__tree_depth < count:
+            self.__tree_depth = count
+
+        self.__tree_layers += 1
+
+    def get_tree_stats(self) -> int:
         return self.__tree_depth
 
     def get_dict(self) -> dict:
-        return self.context
+        return self.__context
 
     def get_json(self) -> str:
-        return json.dumps(self.context, indent = 4, default = str)
+        return json.dumps(self.__context, indent = 4, default = str)
 
 
 def get_layer_type(layer_type):
@@ -213,9 +237,18 @@ def get_geometry_type(geometry_type):
     return type
 
 '''
-con = Context(iface, QgsProject.instance())
+con = QgisContext(iface, QgsProject.instance())
 layer = iface.activeLayer()
 feature = [x for x in layer.getSelectedFeatures()][0]
 con.mount(layer, feature)
 pyperclip.copy(con.get_json())
 '''
+
+if __name__ == '__console__':
+    con = QgisContext(iface, QgsProject.instance())
+    layer = iface.activeLayer()
+    feature = [x for x in layer.getSelectedFeatures()][0]
+    con.mount(layer, feature)
+    pyperclip.copy(con.get_json())
+
+    print(con)

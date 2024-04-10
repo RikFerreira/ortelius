@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# These functions must be inside a render_docx class
 import os
 import io
 
@@ -11,10 +13,10 @@ def multiple_check_boxes(self, value, domain):
 
     return string_buff.getvalue()
 
-def xForMatch(self, value, compare):
+def x_for_match(self, value, compare):
     return "X" if value == compare else ""
 
-def exportPictureFromBase64(self, base64string, filename, output_dir = None):
+def export_picture_from_base_64(self, base64string, filename, output_dir = None):
     if output_dir is None:
         output_dir = self.temp_dir
 
@@ -25,7 +27,7 @@ def exportPictureFromBase64(self, base64string, filename, output_dir = None):
 
     return output_file
 
-def exportPrintLayout(self, layout_dict, feature_dict, output_dir = None):
+def export_qgs_print_layout(self, layout_dict, feature_dict, output_dir = None):
     if layout_dict['layout_atlas'].enabled():
         layout_dict['layout_atlas'].beginRender()
         layout_dict['layout_atlas'].seekTo(feature_dict['feature_obj'])
@@ -41,7 +43,7 @@ def exportPrintLayout(self, layout_dict, feature_dict, output_dir = None):
 
     return output_file
 
-def renderPictureFromPath(self, path, width = None, height = None):
+def render_picture_from_path(self, path, width = None, height = None):
     # TODO: This method does not work well with portrait images. The method rotates the image before render.
 
     section = self.input_template.get_docx().sections[0]
