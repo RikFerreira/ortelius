@@ -5,6 +5,7 @@ from qgis.core import *
 from qgis.utils import iface
 
 import json
+import datetime
 
 class Context:
     def __init__(self, iface, project):
@@ -86,7 +87,6 @@ class Context:
             }
         })
 
-        # TODO: Return the date and the time as datetime objects
         attr_dict = {
             'attributes': dict()
         }
@@ -95,11 +95,17 @@ class Context:
                 value = feature[field.name()]
 
                 if isinstance(value, QDateTime):
-                    value = value.toString('yyyy/MM/dd HH:mm:ss')
+                    value = value.toString('yyyy/MM/dd HH:mm:ss.zzz')
+                    value = datetime.datetime.strptime(value, '%Y/%m/%d %H:%M:%S.%f')
+
                 if isinstance(value, QDate):
                     value = value.toString('yyyy/MM/dd')
+                    value = datetime.datetime.strptime(value, '%Y/%m/%d')
+
                 if isinstance(value, QTime):
-                    value = value.toString('HH:mm:ss')
+                    value = value.toString('HH:mm:ss.zzz')
+                    value = datetime.datetime.strptime(value, '%H:%M:%S.%f')
+
                 if isinstance(value, QByteArray):
                     value = value.toBase64().data()
 
@@ -141,6 +147,7 @@ class Context:
 
     def mount(self, layer, feature) -> None:
         self.__tree_root_layer = layer.name()
+        self.__tree_depth = 0
 
         self.context = dict()
 
@@ -148,7 +155,19 @@ class Context:
         self.context.update(self.__mount_feature_dict(layer, feature))
         self.context.update(self.__mount_layouts_dict())
 
-        self.context
+        # self.__set_tree_depth()
+
+    def __set_tree_depth(self, ctx = self.context, count = 0) -> None:
+        if count == 0:
+            self.__iter_context = iter(self.context)
+
+        if ctx:
+            self.__tree_depth = count + 1
+            if ctx['relations']:
+                self.__set_tree_depth(ctx['relations'], self.__tree_depth)
+
+    def get_tree_depth(self) -> int:
+        return self.__tree_depth
 
     def get_dict(self) -> dict:
         return self.context
@@ -158,7 +177,7 @@ class Context:
 
 
 def get_layer_type(layer_type):
-    # TODO: This method must be replaced byu a match-case statement as soon as QGIS 3.34 becomes the LTS
+    # TODO: This method must be replaced by a match-case statement as soon as QGIS 3.34 becomes the LTS
     if layer_type == QgsMapLayerType.VectorLayer:
         type = "vector"
     elif layer_type == QgsMapLayerType.RasterLayer:
@@ -177,7 +196,7 @@ def get_layer_type(layer_type):
     return type
 
 def get_geometry_type(geometry_type):
-    # TODO: This method must be replaced byu a match-case statement as soon as QGIS 3.34 becomes the LTS
+    # TODO: This method must be replaced by a match-case statement as soon as QGIS 3.34 becomes the LTS
     if geometry_type == QgsWkbTypes.PointGeometry:
         type = "point"
     elif geometry_type == QgsWkbTypes.LineGeometry:
@@ -192,3 +211,11 @@ def get_geometry_type(geometry_type):
         type = "unknown"
 
     return type
+
+'''
+con = Context(iface, QgsProject.instance())
+layer = iface.activeLayer()
+feature = [x for x in layer.getSelectedFeatures()][0]
+con.mount(layer, feature)
+pyperclip.copy(con.get_json())
+'''

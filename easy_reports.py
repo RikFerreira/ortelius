@@ -204,7 +204,6 @@ class EasyReports:
             pass
 
     def setup_interface(self):
-        # TODO: Reset project directory here
         # Project level attributes
         self.pj_instance = QgsProject.instance()
 
@@ -358,7 +357,6 @@ class EasyReports:
             }
         })
 
-        # TODO: Figure out a way to the user to choose if the value is the real or the alias
         attr_dict = {}
         if layer.type() == QgsMapLayerType.VectorLayer:
             for field in layer.fields().toList():
