@@ -15,14 +15,13 @@ class DocxRender:
         self.jinja_env.filters['exportPrintLayout'] = self.exportPrintLayout
         self.jinja_env.filters['exportPictureFromBase64'] = self.exportPictureFromBase64
         self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
-        # self.jinja_env.filters['renderPictureFromBase64'] = self.renderPictureFromBase64
         self.jinja_env.filters['multiple_check_boxes'] = self.multiple_check_boxes
 
     def render(self, context) -> None:
         if isinstance(context, QgisContext):
             ctx_dict = context.get_dict()
-        elif isinstance(context, dict):
-            ctx_dict = context
+        # elif isinstance(context, dict):
+        #     ctx_dict = context
         else:
             raise TypeError('Unknown object specified as context!')
 
@@ -32,3 +31,5 @@ class DocxRender:
     def export(self, path: str) -> None:
         if not isinstance(path, str):
             raise TypeError('Path must be a str object!')
+
+        self.input_template.save(path)
