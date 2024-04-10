@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from qgis.core import *
+from qgis.utils import iface
+
 import jinja2
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm

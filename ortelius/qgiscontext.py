@@ -8,7 +8,7 @@ from PyQt5.QtCore import QDateTime, QDate, QTime, QByteArray
 import json
 import datetime
 
-import helpers
+from ortelius import helpers
 
 class QgisContext:
     def __init__(self, iface, project):
@@ -56,7 +56,7 @@ class QgisContext:
         return env_global
 
     def __mount_layer_dict(self, layer) -> dict:
-        if not isinstance(layer, qgis.core.QgsVectorLayer):
+        if not isinstance(layer, QgsVectorLayer):
             raise TypeError("Reference layer is not a QgsVectorLayer object!")
 
         env_layer = {
@@ -80,7 +80,7 @@ class QgisContext:
         return env_layer
 
     def __mount_feature_dict(self, layer, feature) -> dict:
-        if not isinstance(feature, qgis.core.QgsFeature):
+        if not isinstance(feature, QgsFeature):
             raise TypeError("Current feature is not a QgsFeature object!")
 
         env_feature = dict()
@@ -105,20 +105,24 @@ class QgisContext:
             for field in layer.fields().toList():
                 value = feature[field.name()]
 
-                if isinstance(value, QDateTime):
-                    value = value.toString('yyyy/MM/dd HH:mm:ss.zzz')
-                    value = datetime.datetime.strptime(value, '%Y/%m/%d %H:%M:%S.%f')
+                value = qgis_qttypes_to_python(value)
 
-                if isinstance(value, QDate):
-                    value = value.toString('yyyy/MM/dd')
-                    value = datetime.datetime.strptime(value, '%Y/%m/%d')
+                # if isinstance(value, QDateTime):
+                #     value = value.toString('yyyy/MM/dd HH:mm:ss.zzz')
+                #     value = datetime.datetime.strptime(value, '%Y/%m/%d %H:%M:%S.%f')
 
-                if isinstance(value, QTime):
-                    value = value.toString('HH:mm:ss.zzz')
-                    value = datetime.datetime.strptime(value, '%H:%M:%S.%f')
+                # if isinstance(value, QDate):
+                #     value = value.toString('yyyy/MM/dd')
+                #     value = datetime.datetime.strptime(value, '%Y/%m/%d')
 
-                if isinstance(value, QByteArray):
-                    value = value.toBase64().data()
+                # if isinstance(value, QTime):
+                #     value = value.toString('HH:mm:ss.zzz')
+                #     value = datetime.datetime.strptime(value, '%H:%M:%S.%f')
+
+                # if isinstance(value, QByteArray):
+                #     value = value.toBase64().data()
+
+                # if isinstance(value, QVariant)
 
                 attr_dict['attributes'][field.name()] = value
 
