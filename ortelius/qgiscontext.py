@@ -190,9 +190,6 @@ class QgisContext:
 
         self.__tree_layers += 1
 
-    def get_tree_stats(self) -> int:
-        return self.__tree_depth
-
     def get_dict(self) -> dict:
         return self.__context
 
