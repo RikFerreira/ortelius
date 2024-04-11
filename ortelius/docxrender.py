@@ -83,7 +83,8 @@ class DocxRender:
         if not output_dir:
             output_dir = self.temp_dir
 
-        output_file = os.path.join(output_dir, self.output_name.format(**self.filename_var_space) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
+        # output_file = os.path.join(output_dir, self.output_name.format(**self.filename_var_space) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
+        output_file = os.path.join(output_dir, f'{layout_dict['layout_name']}_{feature_dict['feature_id']}.png')
 
         exporter = QgsLayoutExporter(layout_dict['layout_obj'])
         exporter.exportToImage(output_file, QgsLayoutExporter.ImageExportSettings())
