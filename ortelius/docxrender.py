@@ -63,7 +63,7 @@ class DocxRender:
     def x_for_match(self, value, compare):
         return "X" if value == compare else ""
 
-    def export_picture_from_base_64(self, base64string, filename, output_dir = None):
+    def export_picture_from_base64(self, base64string, filename, output_dir = None):
         if output_dir is None:
             output_dir = self.temp_dir
 

@@ -156,7 +156,7 @@ class QgisContext:
         }
 
         for layout in self.layout_manager.printLayouts():
-            env_layouts['layouts'].update({layout.name(): {'layout_obj': layout, 'layout_atlas': layout.atlas()}})
+            env_layouts['layouts'].update({layout.name(): {'layout_name': layout.name(), 'layout_obj': layout, 'layout_atlas': layout.atlas()}})
 
         return env_layouts
 
