@@ -12,7 +12,10 @@ import os
 import io
 
 class DocxRender:
-    def __init__(self, template_file) -> None:
+    def __init__(self, template_file: str, temp_dir) -> None:
+        if not isinstance(template_file, str):
+            raise TypeError('Template file must be a str object!')
+
         self.input_template = DocxTemplate(template_file)
 
         self.jinja_env = jinja2.Environment()
@@ -22,13 +25,13 @@ class DocxRender:
         self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
         self.jinja_env.filters['multiple_check_boxes'] = self.multiple_check_boxes
 
+        self.temp_dir = temp_dir
+
     def render(self, context) -> None:
         if isinstance(context, QgisContext):
             ctx_dict = context.get_dict()
-        # elif isinstance(context, dict):
-        #     ctx_dict = context
         else:
-            raise TypeError('Unknown object specified as context!')
+            raise TypeError('Unknown object specified as Context!')
 
         self.input_template.reset_replacements()
         self.input_template.render(ctx_dict, self.jinja_env)
@@ -40,6 +43,14 @@ class DocxRender:
         self.input_template.save(path)
 
     def multiple_check_boxes(self, value, domain):
+        type_value = type(value)
+
+        if not isinstance(domain, tuple):
+            raise TypeError('Domain is not a tuple!')
+
+        if not type(domain[0]) == type_value:
+            raise TypeError('Tuple elements are from a different type than the given value!')
+
         print_dict = {a: '☑' if b else '☐' for a, b in zip(domain, [x == value for x in domain])}
 
         string_buff = io.StringIO()
