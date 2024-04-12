@@ -27,7 +27,7 @@ from qgis.core import *
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
-from .easy_reports_dialog import EasyReportsDialog
+from .ortelius_dialog import OrteliusDialog
 import os.path
 import time
 from itertools import compress
@@ -132,7 +132,7 @@ class EasyReports:
         return action
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-        icon_path = ':/plugins/easy_reports/icon.png'
+        icon_path = ':/plugins/ortelius/icon.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Ortelius'),
@@ -153,7 +153,7 @@ class EasyReports:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
-            self.dlg = EasyReportsDialog()
+            self.dlg = OrteliusDialog()
         self.setup_interface()
         self.dlg.qtInputLayer.currentIndexChanged.connect(self.update_interface)
         self.dlg.qtExportReports.clicked.connect(self.run_export)

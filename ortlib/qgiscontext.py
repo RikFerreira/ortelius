@@ -8,7 +8,7 @@ from PyQt5.QtCore import QDateTime, QDate, QTime, QByteArray
 import json
 import datetime
 
-from ortelius import helpers
+from .helpers import *
 
 class QgisContext:
     def __init__(self, iface, project):

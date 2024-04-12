@@ -32,5 +32,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .easy_reports import EasyReports
-    return EasyReports(iface)
+    from .ortelius import Ortelius
+    return Ortelius(iface)

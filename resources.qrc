@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/plugins/easy_reports" >
+    <qresource prefix="/plugins/ortelius" >
         <file>icon.png</file>
     </qresource>
 </RCC>

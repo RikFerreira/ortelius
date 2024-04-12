@@ -19,10 +19,10 @@ class DocxRender:
         self.input_template = DocxTemplate(template_file)
 
         self.jinja_env = jinja2.Environment()
-        self.jinja_env.filters['xForMatch'] = self.xForMatch
-        self.jinja_env.filters['exportPrintLayout'] = self.exportPrintLayout
-        self.jinja_env.filters['exportPictureFromBase64'] = self.exportPictureFromBase64
-        self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
+        self.jinja_env.filters['x_for_match'] = self.x_for_match
+        self.jinja_env.filters['export_qgs_print_layout'] = self.export_qgs_print_layout
+        self.jinja_env.filters['export_picture_from_base64'] = self.export_picture_from_base64
+        self.jinja_env.filters['render_picture_from_path'] = self.render_picture_from_path
         self.jinja_env.filters['multiple_check_boxes'] = self.multiple_check_boxes
 
         self.temp_dir = temp_dir
@@ -84,7 +84,7 @@ class DocxRender:
             output_dir = self.temp_dir
 
         # output_file = os.path.join(output_dir, self.output_name.format(**self.filename_var_space) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
-        output_file = os.path.join(output_dir, f'{layout_dict['layout_name']}_{feature_dict['feature_id']}.png')
+        output_file = os.path.join(output_dir, f'{layout_dict["layout_name"]}_{feature_dict["feature_id"]}.png')
 
         exporter = QgsLayoutExporter(layout_dict['layout_obj'])
         exporter.exportToImage(output_file, QgsLayoutExporter.ImageExportSettings())
@@ -108,3 +108,15 @@ class DocxRender:
             image_height = height
 
         return InlineImage(self.input_template, path, width = image_width, height = image_height)
+
+    # TODO: def exportQrCode(self, feature):
+        # This is the logic of the method
+        # Transform feature to WGS 84 (EPSG: 4326)
+        # Extract centroid coordinates (multipart are a single feature)
+        # Format as following: "lat, long". Precision 5
+        # Create QR Code from the previous string
+        # Export it to temp folder
+
+    # TODO: Image edition using imagemagick
+
+    # TODO: def mount_processing_dict(self):

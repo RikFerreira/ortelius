@@ -18,7 +18,7 @@ from qgis.PyQt.QtGui import QIcon
 
 
 
-class EasyReportsDialogTest(unittest.TestCase):
+class OrteliusDialogTest(unittest.TestCase):
     """Test rerources work."""
 
     def setUp(self):

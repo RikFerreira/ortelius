@@ -38,15 +38,15 @@ LOCALES =
 # translation
 SOURCES = \
 	__init__.py \
-	easy_reports.py easy_reports_dialog.py
+	ortelius.py ortelius_dialog.py
 
-PLUGINNAME = easy_reports
+PLUGINNAME = ortelius
 
 PY_FILES = \
 	__init__.py \
-	easy_reports.py easy_reports_dialog.py
+	ortelius.py ortelius_dialog.py
 
-UI_FILES = easy_reports_dialog_base.ui
+UI_FILES = ortelius_dialog_base.ui
 
 EXTRAS = metadata.txt icon.png
 

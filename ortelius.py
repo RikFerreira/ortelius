@@ -12,7 +12,7 @@ from PyQt5.QtCore import QDateTime, QDate, QTime, QByteArray
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
-from .easy_reports_dialog import EasyReportsDialog
+from .ortelius_dialog import OrteliusDialog
 # from .ortelius.render_document import RenderDoc
 # from .ortelius.context import Context
 import os.path
@@ -23,10 +23,8 @@ from functools import reduce
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
 import jinja2
-import json
-import io
-import base64
-# import qrcode
+
+from . import ortlib
 
 # TODO: Make a method to show field alias instead of field name (option to display field alias in parenthesis)
 # To access the value map as a dictionary, we must access it with the following code
@@ -35,7 +33,7 @@ import base64
 # So, flatten the dict:
 # {key: value for dict in value_map for key, value in dict.items()}
 
-class EasyReports:
+class Ortelius:
     """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
@@ -162,7 +160,7 @@ class EasyReports:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/easy_reports/icon.png'
+        icon_path = ':/plugins/ortelius/icon.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Ortelius'),
@@ -187,7 +185,7 @@ class EasyReports:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
-            self.dlg = EasyReportsDialog()
+            self.dlg = OrteliusDialog()
 
         self.setup_interface()
 
@@ -211,7 +209,7 @@ class EasyReports:
         os.chdir(self.working_dir)
 
         # Set project variables
-        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', -1)
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', -1)
 
         # Set temporary folder
         self.temp_dir = QgsProcessingUtils.tempFolder()
@@ -226,12 +224,12 @@ class EasyReports:
         self.dlg.qtInputLayer.addItems(layers_name)
         self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().name())
 
-        self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('tpf_template_file'))
+        self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_template_file'))
 
-        self.dlg.qtQgsOutputDir.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('tpf_output_dir'))
+        self.dlg.qtQgsOutputDir.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_output_dir'))
 
         self.dlg.qtOutputName.clear()
-        self.dlg.qtOutputName.insert(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('tpf_output_name'))
+        self.dlg.qtOutputName.insert(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_output_name'))
 
         # Setup context dictionary
         self.environment = dict()
@@ -283,8 +281,8 @@ class EasyReports:
             raise ValueError('No output format specified!')
 
         self.input_layer_name = self.dlg.qtInputLayer.currentText()
-        self.input_templateFile = self.dlg.qtQgsInputTemplate.filePath()
-        self.input_template = DocxTemplate(self.input_templateFile)
+        self.input_template_file = self.dlg.qtQgsInputTemplate.filePath()
+        self.input_template_file = DocxTemplate(self.input_template_file)
         self.output_dir = self.dlg.qtQgsOutputDir.filePath()
         self.output_name = self.dlg.qtOutputName.text()
 
@@ -296,122 +294,11 @@ class EasyReports:
         if len(self.features_iterable) == 0:
             raise ValueError('No feature selected!')
 
-        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_template_file', self.input_templateFile)
-        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_dir', self.output_dir)
-        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_output_name', self.output_name)
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_template_file', self.input_template_file)
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_output_dir', self.output_dir)
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_output_name', self.output_name)
 
         return True
-
-    # TODO: def mount_processing_dict(self):
-
-    def run_expression(self, expr_string):
-        expression = QgsExpression(expr_string)
-
-        if not expression.isValid():
-            raise ValueError('Expression not valid!')
-
-        return expression.evaluate()
-
-    # TODO: Image edition using imagemagick
-
-    def exportPrintLayout(self, layout_dict, feature_dict, output_dir = None):
-        if layout_dict['layout_atlas'].enabled():
-            layout_dict['layout_atlas'].beginRender()
-            layout_dict['layout_atlas'].seekTo(feature_dict['feature_obj'])
-            layout_dict['layout_atlas'].refreshCurrentFeature()
-
-        if not output_dir:
-            output_dir = self.temp_dir
-
-        output_file = os.path.join(output_dir, self.output_name.format(**self.filename_var_space) + '_' + layout_dict['layout_obj'].name() + '.' + 'png')
-
-        exporter = QgsLayoutExporter(layout_dict['layout_obj'])
-        exporter.exportToImage(output_file, QgsLayoutExporter.ImageExportSettings())
-
-        return output_file
-
-    # # # # # # # # # # # # # # # #
-    # Custom filters              #
-    # # # # # # # # # # # # # # # #
-
-    # TODO: def exportQrCode(self, feature):
-        # This is the logic of the method
-        # Transform feature to WGS 84 (EPSG: 4326)
-        # Extract centroid coordinates (multipart are a single feature)
-        # Format as following: "lat, long". Precision 5
-        # Create QR Code from the previous string
-        # Export it to temp folder
-
-    def renderPictureFromPath(self, path, width = None, height = None):
-        # TODO: This method does not work well with portrait images. The method rotates the image before render.
-
-        section = self.input_template.get_docx().sections[0]
-        section_width = (section.page_width - (section.left_margin + section.right_margin)) * 1.0 / 36000
-
-        if width <= 1:
-            image_width = Mm(section_width) * width
-        else:
-            image_width = Mm(width)
-
-        if height:
-            image_height = Mm(height)
-        else:
-            image_height = height
-
-        return InlineImage(self.input_template, path, width = image_width, height = image_height)
-
-    def exportPictureFromBase64(self, base64string, filename, output_dir = None):
-        if output_dir is None:
-            output_dir = self.temp_dir
-
-        output_file = os.path.join(output_dir, filename)
-
-        with open(output_file, 'wb') as fout:
-            fout.write(base64.decodebytes(base64string))
-
-        return output_file
-
-    def xForMatch(self, value, compare):
-        return "X" if value == compare else ""
-
-    def multiple_check_boxes(self, value, domain):
-        print_dict = {a: '☑' if b else '☐' for a, b in zip(domain, [x == value for x in domain])}
-
-        string_buff = io.StringIO()
-
-        for key, value in print_dict.items():
-            string_buff.write(f'{value}\t{key}\n')
-
-        return string_buff.getvalue()
-
-    def render_docx(self):
-        for main_feature in self.features_iterable:
-            # TODO: Figure out why this loop runs 3 times
-            # TODO: The creation of the dictionary and the docx export must be inside a QgsTask class. The plugin responsivity relies on this!!!
-            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'tpf_feature_index', main_feature.id())
-
-            context = dict()
-
-            context.update(self.mount_global_dict())
-            context.update(self.mount_feature_dict(main_feature, self.pj_instance.mapLayersByName(self.input_layer_name)[0]))
-            context.update(self.mount_layouts_dict())
-
-            self.filename_var_space = context['feature']
-
-            # print(json.dumps(self.context, indent = 4, default = str))
-
-            self.input_template.reset_replacements()
-            self.input_template.render(context, self.jinja_env)
-            self.input_template.save(os.path.join(self.output_dir, self.output_name.format(**self.filename_var_space) + '.docx'))
-
-            self.progress_bar_value += self.progress_bar_step
-            self.dlg.qtProgressBar.setValue(self.progress_bar_value)
-
-        self.dlg.qtProgressBar.setValue(self.dlg.qtProgressBar.maximum())
-
-        iface.messageBar().pushMessage('Ortelius', f'All {len(self.features_iterable)} features exported!',level=Qgis.Info)
-
-        pass
 
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(1)
@@ -426,9 +313,12 @@ class EasyReports:
             self.progress_bar_value = 0
             self.dlg.qtProgressBar.setValue(self.progress_bar_value)
 
-            self.render_docx()
+            context = ortlib.QgisContext(self.iface, self.pj_instance)
+            docx = ortlib.DocxRender(self.input_template_file, self.temp_dir)
 
-            # tsk_render_docx = QgsTask.fromFunction('render_docx', self.render_docx)
-            # # self.tsk_mgr = QgsTaskManager()
-            # # self.tsk_mgr.addTask(tsk_render_docx)
-            # QgsApplication.taskManager().addTask(tsk_render_docx)
+            for main_feature in self.features_iterable:
+                QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', main_feature.id())
+
+                context.mount(main_feature, self.input_layer)
+                docx.render(context)
+                docx.export(os.path.join(self.output_dir, self.output_name.format(context.get_dict()['feature']['attributes']) + '.docx'))
