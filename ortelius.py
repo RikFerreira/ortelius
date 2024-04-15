@@ -235,15 +235,6 @@ class Ortelius:
         self.environment = dict()
         self.env_global = dict()
 
-        # Setup custom filters
-        self.jinja_env = jinja2.Environment()
-        self.jinja_env.filters['xForMatch'] = self.xForMatch
-        self.jinja_env.filters['exportPrintLayout'] = self.exportPrintLayout
-        self.jinja_env.filters['exportPictureFromBase64'] = self.exportPictureFromBase64
-        self.jinja_env.filters['renderPictureFromPath'] = self.renderPictureFromPath
-        # self.jinja_env.filters['renderPictureFromBase64'] = self.renderPictureFromBase64
-        self.jinja_env.filters['multiple_check_boxes'] = self.multiple_check_boxes
-
         self.update_interface()
 
     def update_interface(self):
