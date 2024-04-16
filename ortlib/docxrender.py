@@ -11,6 +11,8 @@ import base64
 import os
 import io
 
+from .qgiscontext import QgisContext
+
 class DocxRender:
     def __init__(self, template_file: str, temp_dir) -> None:
         if not isinstance(template_file, str):
@@ -48,8 +50,8 @@ class DocxRender:
         if not isinstance(domain, tuple):
             raise TypeError('Domain is not a tuple!')
 
-        if not type(domain[0]) == type_value:
-            raise TypeError('Tuple elements are from a different type than the given value!')
+        # if not isinstance(domain[0], type_value):
+        #     raise TypeError('Tuple elements are from a different type than the given value!')
 
         print_dict = {a: '☑' if b else '☐' for a, b in zip(domain, [x == value for x in domain])}
 

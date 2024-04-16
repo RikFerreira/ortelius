@@ -22,7 +22,7 @@ from itertools import compress
 from functools import reduce
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
-import jinja2
+import traceback
 
 from . import ortlib
 
@@ -239,7 +239,13 @@ class Ortelius:
 
     def update_interface(self):
         # Input layer
-        self.input_layer = self.pj_instance.mapLayersByName(self.dlg.qtInputLayer.currentText())[0]
+        print('DEBUG: maplayersbyname')
+        print(self.dlg.qtInputLayer.currentText())
+        try:
+            self.input_layer = self.pj_instance.mapLayersByName(self.dlg.qtInputLayer.currentText())[0]
+        except:
+            import traceback
+            traceback.print_exc()
 
         self.echo_log(f'Camada mapeada: {self.input_layer}', True)
 
@@ -248,6 +254,7 @@ class Ortelius:
     def echo_log(self, message, breakbefore = False):
         if breakbefore:
             self.dlg.qtLogConsole.append('')
+
         self.dlg.qtLogConsole.append(time.strftime('%d.%m.%Y' + ' - ' + '%H' + ':' + '%M' + ':' + '%S'))
         self.dlg.qtLogConsole.append(message)
         self.dlg.qtLogConsole.update()
@@ -273,7 +280,7 @@ class Ortelius:
 
         self.input_layer_name = self.dlg.qtInputLayer.currentText()
         self.input_template_file = self.dlg.qtQgsInputTemplate.filePath()
-        self.input_template_file = DocxTemplate(self.input_template_file)
+        self.input_template = DocxTemplate(self.input_template_file)
         self.output_dir = self.dlg.qtQgsOutputDir.filePath()
         self.output_name = self.dlg.qtOutputName.text()
 
@@ -304,12 +311,18 @@ class Ortelius:
             self.progress_bar_value = 0
             self.dlg.qtProgressBar.setValue(self.progress_bar_value)
 
-            context = ortlib.QgisContext(self.iface, self.pj_instance)
-            docx = ortlib.DocxRender(self.input_template_file, self.temp_dir)
+            try:
+                context = ortlib.QgisContext(self.iface, self.pj_instance)
+                docx = ortlib.DocxRender(self.input_template_file, self.temp_dir)
+            except Exception as e:
+                self.echo_log(f'{str(e)}\n{traceback.print_last()}')
+            else:
+                for main_feature in self.features_iterable:
+                    QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', main_feature.id())
 
-            for main_feature in self.features_iterable:
-                QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', main_feature.id())
-
-                context.mount(main_feature, self.input_layer)
-                docx.render(context)
-                docx.export(os.path.join(self.output_dir, self.output_name.format(context.get_dict()['feature']['attributes']) + '.docx'))
+                    try:
+                        context.mount(self.input_layer, main_feature)
+                        docx.render(context)
+                        docx.export(os.path.join(self.output_dir, self.output_name.format(context.get_dict()['feature']['attributes']) + '.docx'))
+                    except Exception as e:
+                        self.echo_log(f'{str(e)}\n{traceback.print_last()}')

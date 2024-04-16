@@ -1,4 +1,6 @@
 from qgis.core import *
+from PyQt5.QtCore import QDateTime, QDate, QTime, QByteArray, QVariant
+import datetime
 
 def qgis_get_layer_type(layer_type) -> str:
     # TODO: This method must be replaced by a match-case statement as soon as QGIS 3.34 becomes the LTS
@@ -65,15 +67,15 @@ def qgis_qttypes_to_python(value):
 
     if isinstance(value, QDateTime):
         output = value.toString('yyyy/MM/dd HH:mm:ss.zzz')
-        output = datetime.datetime.strptime(value, '%Y/%m/%d %H:%M:%S.%f')
+        output = datetime.datetime.strptime(output, '%Y/%m/%d %H:%M:%S.%f')
 
     if isinstance(value, QDate):
         output = value.toString('yyyy/MM/dd')
-        output = datetime.datetime.strptime(value, '%Y/%m/%d')
+        output = datetime.datetime.strptime(output, '%Y/%m/%d')
 
     if isinstance(value, QTime):
         output = value.toString('HH:mm:ss.zzz')
-        output = datetime.datetime.strptime(value, '%H:%M:%S.%f')
+        output = datetime.datetime.strptime(output, '%H:%M:%S.%f')
 
     if isinstance(value, QByteArray):
         output = value.toBase64().data()

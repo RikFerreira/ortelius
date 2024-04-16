@@ -2,16 +2,20 @@
 
 from qgis.core import *
 from qgis.utils import iface
-
-from PyQt5.QtCore import QDateTime, QDate, QTime, QByteArray
+import qgis._gui
 
 import json
-import datetime
 
 from .helpers import *
 
 class QgisContext:
     def __init__(self, iface, project):
+        if not isinstance(iface, qgis._gui.QgisInterface):
+            raise TypeError('iface is not a QgisInterface object!')
+
+        if not isinstance(project, QgsProject):
+            raise TypeError('project is not a QgsProject object!')
+
         self.iface = iface
         self.project_instance = project
 
@@ -62,8 +66,8 @@ class QgisContext:
         env_layer = {
             'layer': {
                 'layer_obj': layer,
-                'layer_type': helpers.qgis_get_layer_type(layer.type()),
-                'layer_geometry_type': helpers.qgis_get_geometry_type(layer.geometryType()),
+                'layer_type': qgis_get_layer_type(layer.type()),
+                'layer_geometry_type': qgis_get_geometry_type(layer.geometryType()),
                 'layer_name': layer.name(),
                 'layer_id': layer.id(),
                 'layer_source': layer.sourceName(),
