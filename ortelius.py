@@ -205,23 +205,21 @@ class Ortelius:
         # Project level attributes
         self.pj_instance = QgsProject.instance()
 
+        # Set plugin directories of interest
+        self.temp_dir = QgsProcessingUtils.tempFolder()
         self.working_dir = QgsExpressionContextUtils.projectScope(self.pj_instance).variable('project_home')
         os.chdir(self.working_dir)
 
         # Set project variables
         QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', -1)
 
-        # Set temporary folder
-        self.temp_dir = QgsProcessingUtils.tempFolder()
-
         # List all layers
-        self.pjLayers = [layer for layer in self.pj_instance.mapLayers().values()]
-        layers_name = [layer.name() for layer in self.pjLayers]
+        self.pj_layers = {layer.id(): (layer.name(), layer) for layer in self.pj_instance.mapLayers().values()}
 
         self.dlg.qtTabWidget.setCurrentIndex(0)
 
         self.dlg.qtInputLayer.clear()
-        self.dlg.qtInputLayer.addItems(layers_name)
+        self.dlg.qtInputLayer.addItems(list(self.pj_layers))
         self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().name())
 
         self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_template_file'))
@@ -238,14 +236,7 @@ class Ortelius:
         self.update_interface()
 
     def update_interface(self):
-        # Input layer
-        print('DEBUG: maplayersbyname')
-        print(self.dlg.qtInputLayer.currentText())
-        try:
-            self.input_layer = self.pj_instance.mapLayersByName(self.dlg.qtInputLayer.currentText())[0]
-        except:
-            import traceback
-            traceback.print_exc()
+        self.input_layer = self.pj_layers[self.dlg.qtInputLayer.currentText()][1]
 
         self.echo_log(f'Camada mapeada: {self.input_layer}', True)
 
