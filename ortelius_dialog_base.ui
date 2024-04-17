@@ -260,6 +260,9 @@
                   <property name="text">
                    <string>Save context as JSON</string>
                   </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
                   <property name="autoExclusive">
                    <bool>false</bool>
                   </property>

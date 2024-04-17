@@ -238,8 +238,6 @@ class Ortelius:
     def update_interface(self):
         self.input_layer = self.pj_layers[self.dlg.qtInputLayer.currentText()][1]
 
-        self.echo_log(f'Camada mapeada: {self.input_layer}', True)
-
         self.pj_relations = self.pj_instance.relationManager().relations()
 
     def echo_log(self, message, breakbefore = False):
@@ -247,7 +245,7 @@ class Ortelius:
             self.dlg.qtLogConsole.append('')
 
         self.dlg.qtLogConsole.append(time.strftime('%d.%m.%Y' + ' - ' + '%H' + ':' + '%M' + ':' + '%S'))
-        self.dlg.qtLogConsole.append(message)
+        self.dlg.qtLogConsole.append(f'> {message}')
         self.dlg.qtLogConsole.update()
 
     def check_input(self):
@@ -329,9 +327,11 @@ class Ortelius:
             if not os.path.exists(os.path.join(self.output_dir, file_format)):
                 os.mkdir(os.path.join(self.output_dir, file_format))
 
+        self.echo_log(f'Reference layer:\n\t{self.input_layer.name()}\n\t{self.input_layer.id()}\n\t{len(self.features_iterable)} features to be exported.', True)
+
         for i, main_feature in enumerate(self.features_iterable):
             QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', main_feature.id())
-            self.echo_log(f'({i}/{len(self.features_iterable)}) Feature {main_feature.id()}.')
+            self.echo_log(f'({i+1}/{len(self.features_iterable)}) Feature {main_feature.id()}')
 
             try:
                 context.mount(self.input_layer, main_feature)
@@ -344,9 +344,9 @@ class Ortelius:
                 self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
                 continue
 
-            self.echo_log(f'Feature {main_feature.id()} exported!')
+            self.echo_log(f'Feature {main_feature.id()} exported!\nFile name: {self.output_name.format(**context.get_dict()["feature"]["attributes"])}.')
 
         if self.debug_formats['log']:
             self.save_log()
 
-        self.echo_log(f'All {len(self.features_iterable)} exported!')
+        self.echo_log(f'All {len(self.features_iterable)} selected features exported!')
