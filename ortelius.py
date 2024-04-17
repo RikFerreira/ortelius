@@ -309,8 +309,8 @@ class Ortelius:
 
         try:
             self.check_input()
-        except ValueError as e:
-            iface.messageBar().pushMessage('Ortelius', f'ValueError: {e}', level = Qgis.Critical)
+        except Exception as e:
+            iface.messageBar().pushMessage('Ortelius', f'Error: {e}', level = Qgis.Critical)
             return
 
         # TODO: Parallelize the progress bar
