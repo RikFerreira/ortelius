@@ -220,7 +220,7 @@ class Ortelius:
 
         self.dlg.qtInputLayer.clear()
         self.dlg.qtInputLayer.addItems(list(self.pj_layers))
-        self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().name())
+        self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().id())
 
         self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_template_file'))
 
@@ -296,24 +296,30 @@ class Ortelius:
             self.check_input()
         except ValueError as e:
             iface.messageBar().pushMessage('Ortelius', f'ValueError: {e}', level = Qgis.Critical)
-        else:
-            # TODO: Parallelize the progress bar
-            self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(self.features_iterable)
-            self.progress_bar_value = 0
-            self.dlg.qtProgressBar.setValue(self.progress_bar_value)
+            return
+
+        # TODO: Parallelize the progress bar
+        self.progress_bar_step = round((self.dlg.qtProgressBar.maximum() - self.dlg.qtProgressBar.minimum())) / len(self.features_iterable)
+        self.progress_bar_value = 0
+        self.dlg.qtProgressBar.setValue(self.progress_bar_value)
+
+        try:
+            context = ortlib.QgisContext(self.iface, self.pj_instance)
+            docx = ortlib.DocxRender(self.input_template_file, self.temp_dir)
+        except Exception as e:
+            self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
+            return
+
+        for i, main_feature in enumerate(self.features_iterable):
+            QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', main_feature.id())
+            self.echo_log(f'({i}/{len(self.features_iterable)}) Feature {main_feature.id()}.')
 
             try:
-                context = ortlib.QgisContext(self.iface, self.pj_instance)
-                docx = ortlib.DocxRender(self.input_template_file, self.temp_dir)
+                context.mount(self.input_layer, main_feature)
+                docx.render(context)
+                docx.export(os.path.join(self.output_dir, self.output_name.format(**context.get_dict()['feature']['attributes']) + '.docx'))
             except Exception as e:
-                self.echo_log(f'{str(e)}\n{traceback.print_last()}')
-            else:
-                for main_feature in self.features_iterable:
-                    QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', main_feature.id())
+                self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
+                continue
 
-                    try:
-                        context.mount(self.input_layer, main_feature)
-                        docx.render(context)
-                        docx.export(os.path.join(self.output_dir, self.output_name.format(context.get_dict()['feature']['attributes']) + '.docx'))
-                    except Exception as e:
-                        self.echo_log(f'{str(e)}\n{traceback.print_last()}')
+            self.echo_log(f'Feature {main_feature.id()} exported!')
