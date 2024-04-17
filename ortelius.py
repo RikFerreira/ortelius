@@ -297,11 +297,11 @@ class Ortelius:
         ctx_json = ctx.get_json()
         json_dir = os.path.join(self.output_dir, 'JSON')
 
-        with open(os.path.join(json_dir, f'{filename} + .json')) as out_file:
+        with open(os.path.join(json_dir, f'{filename}.json'), 'w') as out_file:
             out_file.write(ctx_json)
 
     def save_log(self):
-        with open(os.path.join(self.output_dir, 'log.txt')) as out_file:
+        with open(os.path.join(self.output_dir, 'log.txt'), 'w') as out_file:
             out_file.write(self.dlg.qtLogConsole.toPlainText())
 
     def run_export(self):
@@ -325,6 +325,10 @@ class Ortelius:
             self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
             return
 
+        for file_format in [x.upper() for x in self.output_formats if self.output_formats[x]] + (['JSON'] if self.debug_formats['json'] else []):
+            if not os.path.exists(os.path.join(self.output_dir, file_format)):
+                os.mkdir(os.path.join(self.output_dir, file_format))
+
         for i, main_feature in enumerate(self.features_iterable):
             QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_feature_index', main_feature.id())
             self.echo_log(f'({i}/{len(self.features_iterable)}) Feature {main_feature.id()}.')
@@ -332,10 +336,10 @@ class Ortelius:
             try:
                 context.mount(self.input_layer, main_feature)
                 docx.render(context)
-                docx.export(os.path.join(self.output_dir, self.output_name.format(**context.get_dict()['feature']['attributes']) + '.docx'))
+                docx.export(os.path.join(self.output_dir, 'DOCX', self.output_name.format(**context.get_dict()['feature']['attributes']) + '.docx'))
 
                 if self.debug_formats['json']:
-                    self.save_json(context, self.output_name.format(**context.get_dict()['feature']['attributes']) + '.json')
+                    self.save_json(context, self.output_name.format(**context.get_dict()['feature']['attributes']))
             except Exception as e:
                 self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
                 continue
