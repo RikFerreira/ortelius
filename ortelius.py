@@ -323,3 +323,5 @@ class Ortelius:
                 continue
 
             self.echo_log(f'Feature {main_feature.id()} exported!')
+
+        self.echo_log(f'All {len(self.features_iterable)} exported!')
