@@ -111,6 +111,19 @@ class DocxRender:
 
         return InlineImage(self.input_template, path, width = image_width, height = image_height)
 
+    def convert_valuemap(self, value, layer_dict, field_name) -> str:
+        layer = layer_dict['layer_obj']
+        field_idx = layer.fields().indexFromName(field_name)
+
+        try:
+            config_map = layer.editorWidgetSetup(field_idx).config()['map']
+        except:
+            return ''
+
+        value_map_dict = {value: key for dict in config_map for key, value in dict.items()}
+
+        return value_map_dict[value]
+
     # TODO: def exportQrCode(self, feature):
         # This is the logic of the method
         # Transform feature to WGS 84 (EPSG: 4326)
