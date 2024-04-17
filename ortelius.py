@@ -266,6 +266,10 @@ class Ortelius:
         self.output_formats['odt'] = self.dlg.qtOutputOdt.checkState()
         self.output_formats['html'] = self.dlg.qtOutputHtml.checkState()
 
+        self.debug_formats = dict()
+        self.debug_formats['json'] = self.dlg.qtSaveJSON.checkState()
+        self.debug_formats['log'] = self.dlg.qtSaveLogFile.checkState()
+
         if not reduce(lambda a, b: a or b, list(self.output_formats.values())):
             raise ValueError('No output format specified!')
 
@@ -288,6 +292,17 @@ class Ortelius:
         QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_output_name', self.output_name)
 
         return True
+
+    def save_json(self, ctx, filename):
+        ctx_json = ctx.get_json()
+        json_dir = os.path.join(self.output_dir, 'JSON')
+
+        with open(os.path.join(json_dir, f'{filename} + .json')) as out_file:
+            out_file.write(ctx_json)
+
+    def save_log(self):
+        with open(os.path.join(self.output_dir, 'log.txt')) as out_file:
+            out_file.write(self.dlg.qtLogConsole.toPlainText())
 
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(1)
@@ -318,10 +333,16 @@ class Ortelius:
                 context.mount(self.input_layer, main_feature)
                 docx.render(context)
                 docx.export(os.path.join(self.output_dir, self.output_name.format(**context.get_dict()['feature']['attributes']) + '.docx'))
+
+                if self.debug_formats['json']:
+                    self.save_json(context, self.output_name.format(**context.get_dict()['feature']['attributes']) + '.json')
             except Exception as e:
                 self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
                 continue
 
             self.echo_log(f'Feature {main_feature.id()} exported!')
+
+        if self.debug_formats['log']:
+            self.save_log()
 
         self.echo_log(f'All {len(self.features_iterable)} exported!')
