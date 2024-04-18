@@ -1,0 +1,21 @@
+{
+  "input": {
+    "qtInputLayer": "",
+    "qtQgsInputTemplate": "",
+    "qtSelectedFeaturesOnly": "true"
+  },
+  "output": {
+    "qtQgsOutputDir": "",
+    "qtOutputName": ""
+  },
+  "formats": {
+    "qtOutputDocx": "true",
+    "qtOutputPdf": "false",
+    "qtOutputOdt": "false",
+    "qtOutputHtml": "false"
+  },
+  "options": {
+    "qtSaveJSON": "true",
+    "qtSaveLogFile": "true"
+  }
+}
