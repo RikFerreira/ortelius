@@ -1,21 +1,21 @@
 {
-  "input": {
-    "qtInputLayer": "",
-    "qtQgsInputTemplate": "",
-    "qtSelectedFeaturesOnly": "true"
-  },
-  "output": {
-    "qtQgsOutputDir": "",
-    "qtOutputName": ""
-  },
-  "formats": {
-    "qtOutputDocx": "true",
-    "qtOutputPdf": "false",
-    "qtOutputOdt": "false",
-    "qtOutputHtml": "false"
-  },
-  "options": {
-    "qtSaveJSON": "true",
-    "qtSaveLogFile": "true"
-  }
+    "input": {
+        "qtInputLayer": "",
+        "qtQgsInputTemplate": "",
+        "qtSelectedFeaturesOnly": true
+    },
+    "output": {
+        "qtQgsOutputDir": "",
+        "qtOutputName": ""
+    },
+    "formats": {
+        "docx": true,
+        "pdf": false,
+        "odt": false,
+        "html": false
+    },
+    "options": {
+        "json": true,
+        "log": true
+    }
 }

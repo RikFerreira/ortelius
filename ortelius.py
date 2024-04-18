@@ -18,6 +18,7 @@ from .ortelius_dialog import OrteliusDialog
 import os.path
 
 import time
+import json
 from itertools import compress
 from functools import reduce
 from docxtpl import DocxTemplate, InlineImage
@@ -222,12 +223,28 @@ class Ortelius:
         self.dlg.qtInputLayer.addItems(list(self.pj_layers))
         self.dlg.qtInputLayer.setCurrentText(self.iface.activeLayer().id())
 
-        self.dlg.qtQgsInputTemplate.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_template_file'))
+        default_setup = QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_default_setup')
+        try:
+            self.defaults = default_setup
+        except:
+            with open(os.path.join(QgsApplication.qgisSettingsDirPath(), 'python/plugins/ortelius', 'defaults', 'cfg'), 'r') as defaults_json:
+                self.defaults = json.load(defaults_json)
 
-        self.dlg.qtQgsOutputDir.setFilePath(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_output_dir'))
+        self.dlg.qtInputLayer.setCurrentText(self.defaults['input']['qtInputLayer'])
+        self.dlg.qtQgsInputTemplate.setFilePath(self.defaults['input']['qtQgsInputTemplate'])
+        self.dlg.qtSelectedFeaturesOnly.setChecked(self.defaults['input']['qtSelectedFeaturesOnly'])
 
+        self.dlg.qtQgsOutputDir.setFilePath(self.defaults['output']['qtQgsOutputDir'])
         self.dlg.qtOutputName.clear()
-        self.dlg.qtOutputName.insert(QgsExpressionContextUtils.projectScope(self.pj_instance).variable('ortelius_output_name'))
+        self.dlg.qtOutputName.insert(self.defaults['output']['qtOutputName'])
+
+        self.dlg.qtOutputDocx.setChecked(self.defaults['formats']['docx'])
+        self.dlg.qtOutputPdf.setChecked(self.defaults['formats']['pdf'])
+        self.dlg.qtOutputOdt.setChecked(self.defaults['formats']['odt'])
+        self.dlg.qtOutputHtml.setChecked(self.defaults['formats']['html'])
+
+        self.dlg.qtSaveJSON.setChecked(self.defaults['options']['json'])
+        self.dlg.qtSaveLogFile.setChecked(self.defaults['options']['log'])
 
         # Setup context dictionary
         self.environment = dict()
@@ -237,6 +254,7 @@ class Ortelius:
 
     def update_interface(self):
         self.input_layer = self.pj_layers[self.dlg.qtInputLayer.currentText()][1]
+        print(self.pj_layers[self.dlg.qtInputLayer.currentText()])
 
         self.pj_relations = self.pj_instance.relationManager().relations()
 
@@ -258,17 +276,7 @@ class Ortelius:
         if not self.dlg.qtOutputName.text():
             raise ValueError('No output name specified!')
 
-        self.output_formats = dict()
-        self.output_formats['docx'] = self.dlg.qtOutputDocx.checkState()
-        self.output_formats['pdf'] = self.dlg.qtOutputPdf.checkState()
-        self.output_formats['odt'] = self.dlg.qtOutputOdt.checkState()
-        self.output_formats['html'] = self.dlg.qtOutputHtml.checkState()
-
-        self.debug_formats = dict()
-        self.debug_formats['json'] = self.dlg.qtSaveJSON.checkState()
-        self.debug_formats['log'] = self.dlg.qtSaveLogFile.checkState()
-
-        if not reduce(lambda a, b: a or b, list(self.output_formats.values())):
+        if not reduce(lambda a, b: a or b, list(self.defaults['formats'].values())):
             raise ValueError('No output format specified!')
 
         self.input_layer_name = self.dlg.qtInputLayer.currentText()
@@ -285,10 +293,6 @@ class Ortelius:
         if len(self.features_iterable) == 0:
             raise ValueError('No feature selected!')
 
-        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_template_file', self.input_template_file)
-        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_output_dir', self.output_dir)
-        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_output_name', self.output_name)
-
         return True
 
     def save_json(self, ctx, filename):
@@ -304,6 +308,23 @@ class Ortelius:
 
     def run_export(self):
         self.dlg.qtTabWidget.setCurrentIndex(1)
+
+        self.defaults['input']['qtInputLayer'] = self.dlg.qtInputLayer.currentText()
+        self.defaults['input']['qtQgsInputTemplate'] = self.dlg.qtQgsInputTemplate.filePath()
+        self.defaults['input']['qtSelectedFeaturesOnly'] = self.dlg.qtSelectedFeaturesOnly.isChecked()
+
+        self.defaults['output']['qtQgsOutputDir'] = self.dlg.qtQgsOutputDir.filePath()
+        self.defaults['output']['qtOutputName'] = self.dlg.qtOutputName.text()
+
+        self.defaults['formats']['docx'] = self.dlg.qtOutputDocx.isChecked()
+        self.defaults['formats']['pdf'] = self.dlg.qtOutputPdf.isChecked()
+        self.defaults['formats']['odt'] = self.dlg.qtOutputOdt.isChecked()
+        self.defaults['formats']['html'] = self.dlg.qtOutputHtml.isChecked()
+
+        self.defaults['options']['json'] = self.dlg.qtSaveJSON.isChecked()
+        self.defaults['options']['log'] = self.dlg.qtSaveLogFile.isChecked()
+
+        QgsExpressionContextUtils.setProjectVariable(self.pj_instance, 'ortelius_default_setup', self.defaults)
 
         try:
             self.check_input()
@@ -323,7 +344,7 @@ class Ortelius:
             self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
             return
 
-        for file_format in [x.upper() for x in self.output_formats if self.output_formats[x]] + (['JSON'] if self.debug_formats['json'] else []):
+        for file_format in [x.upper() for x in self.defaults['formats'] if self.defaults['formats'][x]] + (['JSON'] if self.defaults['options']['json'] else []):
             if not os.path.exists(os.path.join(self.output_dir, file_format)):
                 os.mkdir(os.path.join(self.output_dir, file_format))
 
@@ -338,7 +359,7 @@ class Ortelius:
                 docx.render(context)
                 docx.export(os.path.join(self.output_dir, 'DOCX', self.output_name.format(**context.get_dict()['feature']['attributes']) + '.docx'))
 
-                if self.debug_formats['json']:
+                if self.defaults['options']['json']:
                     self.save_json(context, self.output_name.format(**context.get_dict()['feature']['attributes']))
             except Exception as e:
                 self.echo_log(f'ERROR: {str(e)}\n{traceback.print_last()}')
@@ -346,7 +367,7 @@ class Ortelius:
 
             self.echo_log(f'Feature {main_feature.id()} exported!\nFile name: {self.output_name.format(**context.get_dict()["feature"]["attributes"])}.')
 
-        if self.debug_formats['log']:
+        if self.defaults['options']['log']:
             self.save_log()
 
         self.echo_log(f'All {len(self.features_iterable)} selected features exported!')
