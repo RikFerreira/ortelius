@@ -254,7 +254,6 @@ class Ortelius:
 
     def update_interface(self):
         self.input_layer = self.pj_layers[self.dlg.qtInputLayer.currentText()][1]
-        print(self.pj_layers[self.dlg.qtInputLayer.currentText()])
 
         self.pj_relations = self.pj_instance.relationManager().relations()
 
